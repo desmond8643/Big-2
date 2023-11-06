@@ -235,7 +235,6 @@ public class GamePanel {
 
             int selectedCardSize = selectedCards.size();
             String numberOfCards;
-            String fiveCardCombination;
 
             switch (selectedCardSize) {
                 case 1, 2, 3, 4:
@@ -317,24 +316,24 @@ public class GamePanel {
         frame.add(passButton);
 }
     public String getFiveCardCombination(ArrayList<Card> cards) {
-    boolean checkStraight = checkStraight(cards);
-    boolean checkFlush = checkFlush(cards);
-    boolean checkFullHouse = checkFullHouse(cards);
-    boolean checkFourOfAKind = checkFourOfAKind(cards);
-    if (checkStraight && checkFlush) {
-        return "Straight Flush";
-    } else if (checkStraight) {
-        return "Straight";
-    } else if (checkFlush) {
-        return "Flush";
-    } else if (checkFullHouse) {
-        return "Full House";
-    } else if (checkFourOfAKind) {
-        return "Four of a kind";
-    } else {
-        return "Invalid";
+        boolean checkStraight = checkStraight(cards);
+        boolean checkFlush = checkFlush(cards);
+        boolean checkFullHouse = checkFullHouse(cards);
+        boolean checkFourOfAKind = checkFourOfAKind(cards);
+        if (checkStraight && checkFlush) {
+            return "Straight Flush";
+        } else if (checkStraight) {
+            return "Straight";
+        } else if (checkFlush) {
+            return "Flush";
+        } else if (checkFullHouse) {
+            return "Full House";
+        } else if (checkFourOfAKind) {
+            return "Four of a kind";
+        } else {
+            return "Invalid";
+        }
     }
-}
     public void sortSelectedCards() {
         // sort selectedCard
         ArrayList<Card> sortedSelectedCards = new ArrayList<>();
@@ -517,42 +516,65 @@ public class GamePanel {
         }
         return cards.get(0).getSuitValue() == cardTableObjects.get(0).getSuitValue() && cards.get(4).getRankValue() > cardTableObjects.get(4).getRankValue();
     }
+    public boolean compareFullHouse(ArrayList<Card> cards) {
+        // find the rank with 3 cards in table and selected
+
+        // since it's sorted, let's compare index 0 and 2 33444 or 33344
+        int selectedTriple;
+        if (cards.get(0).getRankValue() == cards.get(2).getRankValue()) {
+            selectedTriple = cards.get(0).getRankValue();
+        } else {
+            selectedTriple = cards.get(4).getRankValue();
+        }
+
+        int tableTriple;
+        if (cardTableObjects.get(0).getRankValue() == cardTableObjects.get(2).getRankValue()) {
+            tableTriple = cardTableObjects.get(0).getRankValue();
+        } else {
+            tableTriple = cardTableObjects.get(4).getRankValue();
+        }
+
+        return selectedTriple > tableTriple;
+    }
     public boolean isSelectedCardValid(String combination) {
-            switch(combination) {
-                case "Single card":
-                    return checkSingleCard();
-                case "Pair":
-                    return checkPair();
-                case "Triples":
-                    return checkTriples();
-                case "Four Cards":
-                    return checkFourCards();
-                case "Straight", "Flush", "Full House", "Four of a kind", "Straight Flush":
-                    // if it is a pass or table is empty => valid
-                    if (cardTableObjects.isEmpty() || computerPass) {
-                        computerPass = false;
-                        return true;
-                    }
+        switch(combination) {
+            case "Single card":
+                return checkSingleCard();
+            case "Pair":
+                return checkPair();
+            case "Triples":
+                return checkTriples();
+            case "Four cards":
+                return checkFourCards();
+            case "Straight", "Flush", "Full House", "Four of a kind", "Straight Flush":
+                // if it is a pass or table is empty => valid
+                if (cardTableObjects.isEmpty() || computerPass) {
+                    computerPass = false;
+                    return true;
+                }
 
-                    // get table combination
-                    String tableCombination = getFiveCardCombination(cardTableObjects);
+                // get table combination
+                String tableCombination = getFiveCardCombination(cardTableObjects);
 
-                    // get player and table combination value
-                    int playerCombinationValue = getCombinationValue(combination);
-                    int tableCombinationValue = getCombinationValue(tableCombination);
+                // get player and table combination value
+                int playerCombinationValue = getCombinationValue(combination);
+                int tableCombinationValue = getCombinationValue(tableCombination);
 
-                    // Compare player and table combination
-                    if (playerCombinationValue > tableCombinationValue) {
-                        return true;
-                    }
-                    if (playerCombinationValue < tableCombinationValue) {
-                        return false;
-                    }
-                    if (combination.equals("Straight")) {
-                        return compareStraight(selectedCards);
-                    } else if (combination.equals("Flush")) {
-                        return compareFlush(selectedCards);
-                    }
+                // Compare player and table combination (big or smaller case)
+                if (playerCombinationValue > tableCombinationValue) {
+                    return true;
+                }
+                if (playerCombinationValue < tableCombinationValue) {
+                    return false;
+                }
+                // same case, need to compare
+                if (combination.equals("Straight")) {
+                    return compareStraight(selectedCards);
+                } else if (combination.equals("Flush")) {
+                    return compareFlush(selectedCards);
+                } else if (combination.equals("Full House")) {
+                    return compareFullHouse(selectedCards);
+                }
             }
         return false;
     }
@@ -726,16 +748,35 @@ public class GamePanel {
             }
         }
 
+        // add minimum full house move
+        ArrayList<Card> fullHouse = new ArrayList<>();
+        if (!pair.isEmpty() && !triple.isEmpty()) {
+            if (triple.get(0).getRankValue() > pair.get(0).getRankValue()) {
+                fullHouse.add(pair.get(0));
+                fullHouse.add(pair.get(1));
+                fullHouse.add(triple.get(0));
+                fullHouse.add(triple.get(1));
+                fullHouse.add(triple.get(2));
+            } else {
+                fullHouse.add(triple.get(0));
+                fullHouse.add(triple.get(1));
+                fullHouse.add(triple.get(2));
+                fullHouse.add(pair.get(0));
+                fullHouse.add(pair.get(1));
+            }
+            possibleMoves.add(fullHouse);
+        }
+
         // random order of arraylist and selected the first one for computer move
-        if (!flush.isEmpty()) {
-            computerSelectedCards.addAll(flush);
-            renderComputerCardInTable(computerSelectedCards);
-        } else {
+//        if (!flush.isEmpty()) {
+//            computerSelectedCards.addAll(flush);
+//            renderComputerCardInTable(computerSelectedCards);
+//        } else {
             Collections.shuffle(possibleMoves);
             ArrayList<Card> getRandomMove = possibleMoves.get(0);
             computerSelectedCards.addAll(getRandomMove);
             renderComputerCardInTable(computerSelectedCards);
-        }
+//        }
     }
     public void computerSingleCard() {
         computerPass = true;
@@ -918,6 +959,7 @@ public class GamePanel {
             }
             Card computerCard5 = computerStraight.get(4); // the last card is always the largest card
             Card tableCard5 = cardTableObjects.get(4);
+            System.out.println(computerCard5.getRankValue() + ", " + tableCard5.getRankValue());
             if (computerCard5.getRankValue() == tableCard5.getRankValue() && computerCard5.getSuitValue() > tableCard5.getSuitValue()) {
                 for (int i = 0; i < 5; i++) {
                     computerSelectedCards.add(computerStraight.get(i));
@@ -1018,13 +1060,13 @@ public class GamePanel {
             }
         }
 
-        if (checkStraight(cardTableObjects)) {
+        if (checkStraight(cardTableObjects) && !flushes.isEmpty()) {
             computerSelectedCards.addAll(flushes.get(0));
             renderComputerCardInTable(computerSelectedCards);
             computerPass = false;
         }
 
-        // find for smaller straight possibilities first
+        // find for smaller flush possibilities first
         for (ArrayList<Card> flush: flushes) {
             if (!computerPass) {
                 break;
@@ -1047,9 +1089,102 @@ public class GamePanel {
             }
         }
     }
+    public void computerFullHouse() {
+        computerPass = true;
+        // check computer possible triples
+        ArrayList<ArrayList<Card>> triples = new ArrayList<>();
+        for (int i = 0; i < sortedSecondHalfObjects.size() - 2; i++) {
+            Card card1 = sortedSecondHalfObjects.get(i);
+            Card card2 = sortedSecondHalfObjects.get(i + 1);
+            Card card3 = sortedSecondHalfObjects.get(i + 2);
+            if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue()) {
+                ArrayList<Card> triple = new ArrayList<>();
+                triple.add(card1);
+                triple.add(card2);
+                triple.add(card3);
+                triples.add(triple);
+            }
+        }
+        // check if computer has pair and only get the smallest one
+        ArrayList<Card> pair = new ArrayList<>();
+        for (int i = 0; i < sortedSecondHalfObjects.size() - 1; i++) {
+            Card card1 = sortedSecondHalfObjects.get(i);
+            Card card2 = sortedSecondHalfObjects.get(i + 1);
+            if (card1.getRankValue() == card2.getRankValue()) {
+                // check if it is repeated with possible triples
+                boolean repeatWithTriple = false;
+                for (ArrayList<Card> triple: triples) {
+                    if (card1.getRankValue() == triple.get(0).getRankValue()) {
+                        repeatWithTriple = true;
+                        break;
+                    }
+                }
+                if (!repeatWithTriple) {
+                    pair.add(card1);
+                    pair.add(card2);
+                    break;
+                }
+            }
+        }
 
+        // check computer has a triple and pair
+        boolean fullHouse = !triples.isEmpty() && !pair.isEmpty();
 
+        // if table is straight or flush and computer has a full house
+        if ((checkStraight(cardTableObjects) || checkFlush(cardTableObjects)) && fullHouse) {
+            ArrayList<Card> triple = triples.get(0); // get the smallest triple
+            int comTriple = triple.get(0).getRankValue();
+            // add the smaller pair/triples first
+            if (comTriple > pair.get(0).getRankValue()) {
+                computerSelectedCards.add(pair.get(0));
+                computerSelectedCards.add(pair.get(1));
+                computerSelectedCards.add(triple.get(0));
+                computerSelectedCards.add(triple.get(1));
+                computerSelectedCards.add(triple.get(2));
+            } else {
+                computerSelectedCards.add(triple.get(0));
+                computerSelectedCards.add(triple.get(1));
+                computerSelectedCards.add(triple.get(2));
+                computerSelectedCards.add(pair.get(0));
+                computerSelectedCards.add(pair.get(1));
+            }
+            renderComputerCardInTable(computerSelectedCards);
+            computerPass = false;
+        }
 
+        // find for smaller triple possibilities first
+        if (computerPass) {
+            int tableTriple;
+            if (cardTableObjects.get(0).getRankValue() == cardTableObjects.get(2).getRankValue()) {
+                tableTriple = cardTableObjects.get(0).getRankValue();
+            } else {
+                tableTriple = cardTableObjects.get(4).getRankValue();
+            }
+
+            for (ArrayList<Card> triple: triples) {
+                int comTriple = triple.get(0).getRankValue();
+                if (comTriple > tableTriple && fullHouse) {
+                    // add the smaller pair/triples first
+                    if (comTriple > pair.get(0).getRankValue()) {
+                        computerSelectedCards.add(pair.get(0));
+                        computerSelectedCards.add(pair.get(1));
+                        computerSelectedCards.add(triple.get(0));
+                        computerSelectedCards.add(triple.get(1));
+                        computerSelectedCards.add(triple.get(2));
+                    } else {
+                        computerSelectedCards.add(triple.get(0));
+                        computerSelectedCards.add(triple.get(1));
+                        computerSelectedCards.add(triple.get(2));
+                        computerSelectedCards.add(pair.get(0));
+                        computerSelectedCards.add(pair.get(1));
+                    }
+                    renderComputerCardInTable(computerSelectedCards);
+                    computerPass = false;
+                    break;
+                }
+            }
+        }
+    }
     public void computerMove(String combination) {
         switch (combination) {
             case "Single card":
@@ -1066,14 +1201,27 @@ public class GamePanel {
                 break;
             case "Straight":
                 computerStraight();
+                if (computerPass) {
+                    computerFlush();
+                }
+                if (computerPass) {
+                    computerFullHouse();
+                }
+                break;
             case "Flush":
                 computerFlush();
+                if (computerPass) {
+                    computerFullHouse();
+                }
+                break;
+            case "Full House":
+                computerFullHouse();
+                break;
         }
         if (computerPass) {
             System.out.println("Pass");
         }
     }
-
     public void renderComputerCardInTable(ArrayList<Card> computerSelectedCards) {
         cardTable.removeAll();
         cardTable.revalidate();
@@ -1134,7 +1282,6 @@ public class GamePanel {
             cardTableCards[i].setBounds((i + 1) * tableCardGap - 100, 20, 102, 153);
         }
     }
-
     public void renderCardInTable () {
         cardTable.removeAll();
         cardTable.revalidate();
