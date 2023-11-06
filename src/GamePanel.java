@@ -456,13 +456,15 @@ public class GamePanel {
         }
 
         // cases that all -1 rank away from each other
+        // [3, 4, 5, 6, 7], [4, 5, 6, 7, 8], [5, 6, 7, 8, 9], [6, 7, 8, 9, 10], [7, 8, 9, 10, J], [8, 9, 10, J, Q], [9, 10, J, Q, K], [10, J, Q, K, A]
         for (int i = cards.size() - 1; i > 0; i--) {
             if (cards.get(i).getRankValue() - cards.get(i - 1).getRankValue() != 1) {
                 return false;
             }
         }
-        return true;
-        // [3, 4, 5, 6, 7], [4, 5, 6, 7, 8], [5, 6, 7, 8, 9], [6, 7, 8, 9, 10], [7, 8, 9, 10, J], [8, 9, 10, J, Q], [9, 10, J, Q, K], [10, J, Q, K, A], [J, Q, K, A, 2]
+
+        // exclude [J, Q, K, A, 2]
+        return fifthCard != 13;
     }
 
     public boolean checkFlush(ArrayList<Card> cards) {
@@ -628,18 +630,21 @@ public class GamePanel {
         }
 
         // add minimum triples card move
-        ArrayList<Card> triple = new ArrayList<>();
+        ArrayList<ArrayList<Card>> triples = new ArrayList<>();
         for (int i = 0; i < sortedSecondHalfObjects.size() - 2; i++) {
             Card card1 = sortedSecondHalfObjects.get(i);
             Card card2 = sortedSecondHalfObjects.get(i + 1);
             Card card3 = sortedSecondHalfObjects.get(i + 2);
             if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue()) {
+                ArrayList<Card> triple = new ArrayList<>();
                 triple.add(card1);
                 triple.add(card2);
                 triple.add(card3);
-                possibleMoves.add(triple);
-                break;
+                triples.add(triple);
             }
+        }
+        if (!triples.isEmpty()) {
+            possibleMoves.add(triples.get(0)); // only add the smallest triple
         }
 
         // add minimum four cards move
@@ -750,33 +755,38 @@ public class GamePanel {
 
         // add minimum full house move
         ArrayList<Card> fullHouse = new ArrayList<>();
-        if (!pair.isEmpty() && !triple.isEmpty()) {
-            if (triple.get(0).getRankValue() > pair.get(0).getRankValue()) {
-                fullHouse.add(pair.get(0));
-                fullHouse.add(pair.get(1));
-                fullHouse.add(triple.get(0));
-                fullHouse.add(triple.get(1));
-                fullHouse.add(triple.get(2));
-            } else {
-                fullHouse.add(triple.get(0));
-                fullHouse.add(triple.get(1));
-                fullHouse.add(triple.get(2));
-                fullHouse.add(pair.get(0));
-                fullHouse.add(pair.get(1));
+        for (ArrayList<Card> triple: triples) {
+            if (!pair.isEmpty()) {
+                if (triple.get(0).getRankValue() > pair.get(0).getRankValue()) {
+                    fullHouse.add(pair.get(0));
+                    fullHouse.add(pair.get(1));
+                    fullHouse.add(triple.get(0));
+                    fullHouse.add(triple.get(1));
+                    fullHouse.add(triple.get(2));
+                    possibleMoves.add(fullHouse);
+                    break;
+                } else if (triple.get(0).getRankValue() < pair.get(0).getRankValue()) {
+                    fullHouse.add(triple.get(0));
+                    fullHouse.add(triple.get(1));
+                    fullHouse.add(triple.get(2));
+                    fullHouse.add(pair.get(0));
+                    fullHouse.add(pair.get(1));
+                    possibleMoves.add(fullHouse);
+                    break;
+                }
             }
-            possibleMoves.add(fullHouse);
         }
 
         // random order of arraylist and selected the first one for computer move
-//        if (!flush.isEmpty()) {
-//            computerSelectedCards.addAll(flush);
-//            renderComputerCardInTable(computerSelectedCards);
-//        } else {
+        if (!fullHouse.isEmpty()) {
+            computerSelectedCards.addAll(fullHouse);
+            renderComputerCardInTable(computerSelectedCards);
+        } else {
             Collections.shuffle(possibleMoves);
             ArrayList<Card> getRandomMove = possibleMoves.get(0);
             computerSelectedCards.addAll(getRandomMove);
             renderComputerCardInTable(computerSelectedCards);
-//        }
+        }
     }
     public void computerSingleCard() {
         computerPass = true;
@@ -903,7 +913,7 @@ public class GamePanel {
                 if (nextCard.getRankValue() == tempStraight.get(tempStraight.size() - 1).getRankValue() + 1) {
                     tempStraight.add(nextCard);
                 }
-                if (tempStraight.size() == 5) {
+                if (tempStraight.size() == 5 && tempStraight.get(4).getRankValue() != 13) {
                     straights.add(tempStraight);
                     break;
                 }
@@ -949,86 +959,26 @@ public class GamePanel {
         }
 
         // Check if the straight is larger than the straight on table
-        boolean table12345 = cardTableObjects.get(0).getRankValue() == 1 && cardTableObjects.get(3).getRankValue() == 12 && cardTableObjects.get(4).getRankValue() == 13;
-        boolean table23456 = cardTableObjects.get(0).getRankValue() == 1 && cardTableObjects.get(1).getRankValue() == 2 && cardTableObjects.get(4).getRankValue() == 13;
+        // Check the sum of the last 2 rank value and if they have the same rank value, check the last card suit value
 
-        // find for smaller straight possibilities first
-        for (ArrayList<Card> computerStraight : straights) {
-            if (table12345 || table23456) {
-                break;
-            }
-            Card computerCard5 = computerStraight.get(4); // the last card is always the largest card
-            Card tableCard5 = cardTableObjects.get(4);
-            System.out.println(computerCard5.getRankValue() + ", " + tableCard5.getRankValue());
-            if (computerCard5.getRankValue() == tableCard5.getRankValue() && computerCard5.getSuitValue() > tableCard5.getSuitValue()) {
-                for (int i = 0; i < 5; i++) {
-                    computerSelectedCards.add(computerStraight.get(i));
-                }
-                renderComputerCardInTable(computerSelectedCards);
-                computerPass = false;
-                break;
-            }
-            if (computerCard5.getRankValue() > tableCard5.getRankValue()) {
-                for (int i = 0; i < 5; i++) {
-                    computerSelectedCards.add(computerStraight.get(i));
-                }
-                renderComputerCardInTable(computerSelectedCards);
-                computerPass = false;
-                break;
-            }
+        // get table last 2 sum first
+        int tableLast2Sum = cardTableObjects.get(3).getRankValue() + cardTableObjects.get(4).getRankValue();
+        // handle exclusive case => 34562
+        if (tableLast2Sum == 17 && cardTableObjects.get(4).getRankValue() == 13) {
+            tableLast2Sum = 24;
         }
 
-        // 23456
         for (ArrayList<Card> computerStraight: straights) {
-            if (table12345 || !computerPass) {
+            int comLast2Sum = computerStraight.get(3).getRankValue() + computerStraight.get(4).getRankValue();
+            if (comLast2Sum > tableLast2Sum) {
+                for (int i = 0; i < 5; i++) {
+                    computerSelectedCards.add(computerStraight.get(i));
+                }
+                renderComputerCardInTable(computerSelectedCards);
+                computerPass = false;
                 break;
             }
-            if (computerStraight.get(0).getRankValue() == 1 && computerStraight.get(1).getRankValue() == 2 && computerStraight.get(2).getRankValue() == 3
-                    && computerStraight.get(3).getRankValue() == 4 && computerStraight.get(4).getRankValue() == 13 ) {
-                // check if table also has 2, 3, 4, 5, 6
-                if (table23456) {
-                    // check who has the largest suit
-                    for (Card card: cardTableObjects) {
-                        if (computerStraight.get(4).getRankValue() == card.getRankValue() && computerStraight.get(4).getSuitValue() > card.getSuitValue()) {
-                            for (int i = 0; i < 5; i++) {
-                                computerSelectedCards.add(computerStraight.get(i));
-                            }
-                            renderComputerCardInTable(computerSelectedCards);
-                            computerPass = false;
-                            break;
-                        }
-                    }
-                } else {
-                    for (int i = 0; i < 5; i++) {
-                        computerSelectedCards.add(computerStraight.get(i));
-                    }
-                    renderComputerCardInTable(computerSelectedCards);
-                    computerPass = false;
-                    break;
-                }
-            }
-        }
-
-        // A, 2, 3, 4, 5
-        for (ArrayList<Card> computerStraight: straights) {
-            if (!computerPass) {
-                break;
-            }
-            if (computerStraight.get(0).getRankValue() == 1 && computerStraight.get(1).getRankValue() == 2 &&
-                    computerStraight.get(2).getRankValue() == 3 && computerStraight.get(3).getRankValue() == 12 && computerStraight.get(4).getRankValue() == 13) {
-                // check if table also has A, 2, 3, 4, 5
-                if (table12345) {
-                    // check who has the largest suit
-                    if (computerStraight.get(4).getRankValue() == cardTableObjects.get(4).getRankValue() && computerStraight.get(4).getSuitValue() > cardTableObjects.get(4).getSuitValue()) {
-                        for (int i = 0; i < 5; i++) {
-                            computerSelectedCards.add(computerStraight.get(i));
-                        }
-                        renderComputerCardInTable(computerSelectedCards);
-                        computerPass = false;
-                        break;
-                    }
-                }
-            } else {
+            if (comLast2Sum == tableLast2Sum && computerStraight.get(4).getSuitValue() > cardTableObjects.get(4).getSuitValue()) {
                 for (int i = 0; i < 5; i++) {
                     computerSelectedCards.add(computerStraight.get(i));
                 }
@@ -1037,6 +987,95 @@ public class GamePanel {
                 break;
             }
         }
+
+//        boolean table12345 = cardTableObjects.get(0).getRankValue() == 1 && cardTableObjects.get(3).getRankValue() == 12 && cardTableObjects.get(4).getRankValue() == 13;
+//        boolean table23456 = cardTableObjects.get(0).getRankValue() == 1 && cardTableObjects.get(1).getRankValue() == 2 && cardTableObjects.get(4).getRankValue() == 13;
+//
+//        // find for smaller straight possibilities first
+//        for (ArrayList<Card> computerStraight : straights) {
+//            if (table12345 || table23456) {
+//                break;
+//            }
+//            Card computerCard5 = computerStraight.get(4); // the last card is always the largest card
+//            Card tableCard5 = cardTableObjects.get(4);
+//            System.out.println(computerCard5.getRankValue() + ", " + tableCard5.getRankValue());
+//            if (computerCard5.getRankValue() == tableCard5.getRankValue() && computerCard5.getSuitValue() > tableCard5.getSuitValue()) {
+//                for (int i = 0; i < 5; i++) {
+//                    computerSelectedCards.add(computerStraight.get(i));
+//                }
+//                renderComputerCardInTable(computerSelectedCards);
+//                computerPass = false;
+//                break;
+//            }
+//            if (computerCard5.getRankValue() > tableCard5.getRankValue()) {
+//                for (int i = 0; i < 5; i++) {
+//                    computerSelectedCards.add(computerStraight.get(i));
+//                }
+//                renderComputerCardInTable(computerSelectedCards);
+//                computerPass = false;
+//                break;
+//            }
+//        }
+//
+//        // 23456
+//        for (ArrayList<Card> computerStraight: straights) {
+//            if (table12345 || !computerPass) {
+//                break;
+//            }
+//            if (computerStraight.get(0).getRankValue() == 1 && computerStraight.get(1).getRankValue() == 2 && computerStraight.get(2).getRankValue() == 3
+//                    && computerStraight.get(3).getRankValue() == 4 && computerStraight.get(4).getRankValue() == 13 ) {
+//                // check if table also has 2, 3, 4, 5, 6
+//                if (table23456) {
+//                    // check who has the largest suit
+//                    for (Card card: cardTableObjects) {
+//                        if (computerStraight.get(4).getRankValue() == card.getRankValue() && computerStraight.get(4).getSuitValue() > card.getSuitValue()) {
+//                            for (int i = 0; i < 5; i++) {
+//                                computerSelectedCards.add(computerStraight.get(i));
+//                            }
+//                            renderComputerCardInTable(computerSelectedCards);
+//                            computerPass = false;
+//                            break;
+//                        }
+//                    }
+//                } else {
+//                    for (int i = 0; i < 5; i++) {
+//                        computerSelectedCards.add(computerStraight.get(i));
+//                    }
+//                    renderComputerCardInTable(computerSelectedCards);
+//                    computerPass = false;
+//                    break;
+//                }
+//            }
+//        }
+//
+//        // A, 2, 3, 4, 5
+//        for (ArrayList<Card> computerStraight: straights) {
+//            if (!computerPass) {
+//                break;
+//            }
+//            if (computerStraight.get(0).getRankValue() == 1 && computerStraight.get(1).getRankValue() == 2 &&
+//                    computerStraight.get(2).getRankValue() == 3 && computerStraight.get(3).getRankValue() == 12 && computerStraight.get(4).getRankValue() == 13) {
+//                // check if table also has A, 2, 3, 4, 5
+//                if (table12345) {
+//                    // check who has the largest suit
+//                    if (computerStraight.get(4).getRankValue() == cardTableObjects.get(4).getRankValue() && computerStraight.get(4).getSuitValue() > cardTableObjects.get(4).getSuitValue()) {
+//                        for (int i = 0; i < 5; i++) {
+//                            computerSelectedCards.add(computerStraight.get(i));
+//                        }
+//                        renderComputerCardInTable(computerSelectedCards);
+//                        computerPass = false;
+//                        break;
+//                    }
+//                }
+//            } else {
+//                for (int i = 0; i < 5; i++) {
+//                    computerSelectedCards.add(computerStraight.get(i));
+//                }
+//                renderComputerCardInTable(computerSelectedCards);
+//                computerPass = false;
+//                break;
+//            }
+//        }
         // if largest number in straight is larger than straight on table
         // [3, 4, 5, 6, 7], [4, 5, 6, 7, 8], [5, 6, 7, 8, 9], [6, 7, 8, 9, 10], [7, 8, 9, 10, J], [8, 9, 10, J, Q], [9, 10, J, Q, K], [10, J, Q, K, A], [J, Q, K, A, 2]
     }
@@ -1112,17 +1151,12 @@ public class GamePanel {
             Card card2 = sortedSecondHalfObjects.get(i + 1);
             if (card1.getRankValue() == card2.getRankValue()) {
                 // check if it is repeated with possible triples
-                boolean repeatWithTriple = false;
                 for (ArrayList<Card> triple: triples) {
                     if (card1.getRankValue() == triple.get(0).getRankValue()) {
-                        repeatWithTriple = true;
+                        pair.add(card1);
+                        pair.add(card2);
                         break;
                     }
-                }
-                if (!repeatWithTriple) {
-                    pair.add(card1);
-                    pair.add(card2);
-                    break;
                 }
             }
         }
@@ -1132,38 +1166,9 @@ public class GamePanel {
 
         // if table is straight or flush and computer has a full house
         if ((checkStraight(cardTableObjects) || checkFlush(cardTableObjects)) && fullHouse) {
-            ArrayList<Card> triple = triples.get(0); // get the smallest triple
-            int comTriple = triple.get(0).getRankValue();
-            // add the smaller pair/triples first
-            if (comTriple > pair.get(0).getRankValue()) {
-                computerSelectedCards.add(pair.get(0));
-                computerSelectedCards.add(pair.get(1));
-                computerSelectedCards.add(triple.get(0));
-                computerSelectedCards.add(triple.get(1));
-                computerSelectedCards.add(triple.get(2));
-            } else {
-                computerSelectedCards.add(triple.get(0));
-                computerSelectedCards.add(triple.get(1));
-                computerSelectedCards.add(triple.get(2));
-                computerSelectedCards.add(pair.get(0));
-                computerSelectedCards.add(pair.get(1));
-            }
-            renderComputerCardInTable(computerSelectedCards);
-            computerPass = false;
-        }
-
-        // find for smaller triple possibilities first
-        if (computerPass) {
-            int tableTriple;
-            if (cardTableObjects.get(0).getRankValue() == cardTableObjects.get(2).getRankValue()) {
-                tableTriple = cardTableObjects.get(0).getRankValue();
-            } else {
-                tableTriple = cardTableObjects.get(4).getRankValue();
-            }
-
             for (ArrayList<Card> triple: triples) {
-                int comTriple = triple.get(0).getRankValue();
-                if (comTriple > tableTriple && fullHouse) {
+                if (triple.get(0).getRankValue() != pair.get(0).getRankValue()) {
+                    int comTriple = triple.get(0).getRankValue();
                     // add the smaller pair/triples first
                     if (comTriple > pair.get(0).getRankValue()) {
                         computerSelectedCards.add(pair.get(0));
@@ -1181,6 +1186,42 @@ public class GamePanel {
                     renderComputerCardInTable(computerSelectedCards);
                     computerPass = false;
                     break;
+                }
+            }
+        }
+
+        // find for smaller triple possibilities first
+        if (computerPass) {
+            int tableTriple;
+            if (cardTableObjects.get(0).getRankValue() == cardTableObjects.get(2).getRankValue()) {
+                tableTriple = cardTableObjects.get(0).getRankValue();
+            } else {
+                tableTriple = cardTableObjects.get(4).getRankValue();
+            }
+
+            for (ArrayList<Card> triple: triples) {
+                int comTriple = triple.get(0).getRankValue();
+                if (comTriple > tableTriple && fullHouse) {
+                    // add the smaller pair/triples first
+                    if (comTriple > pair.get(0).getRankValue()) { // only have larger or smaller pair will execute computer move
+                        computerSelectedCards.add(pair.get(0));
+                        computerSelectedCards.add(pair.get(1));
+                        computerSelectedCards.add(triple.get(0));
+                        computerSelectedCards.add(triple.get(1));
+                        computerSelectedCards.add(triple.get(2));
+                        renderComputerCardInTable(computerSelectedCards);
+                        computerPass = false;
+                        break;
+                    } else if (comTriple < pair.get(0).getRankValue()) {
+                        computerSelectedCards.add(triple.get(0));
+                        computerSelectedCards.add(triple.get(1));
+                        computerSelectedCards.add(triple.get(2));
+                        computerSelectedCards.add(pair.get(0));
+                        computerSelectedCards.add(pair.get(1));
+                        renderComputerCardInTable(computerSelectedCards);
+                        computerPass = false;
+                        break;
+                    }
                 }
             }
         }
