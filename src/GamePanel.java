@@ -538,6 +538,23 @@ public class GamePanel {
 
         return selectedTriple > tableTriple;
     }
+    public boolean compareFourOfAKind(ArrayList<Card> cards) {
+        int selectedFour;
+        if (cards.get(0).getRankValue() == cards.get(3).getRankValue()) {
+            selectedFour = cards.get(0).getRankValue();
+        } else {
+            selectedFour = cards.get(4).getRankValue();
+        }
+
+        int tableFour;
+        if (cardTableObjects.get(0).getRankValue() == cardTableObjects.get(3).getRankValue()) {
+            tableFour = cardTableObjects.get(0).getRankValue();
+        } else {
+            tableFour = cardTableObjects.get(4).getRankValue();
+        }
+
+        return selectedFour > tableFour;
+    }
     public boolean isSelectedCardValid(String combination) {
         switch(combination) {
             case "Single card":
@@ -576,6 +593,8 @@ public class GamePanel {
                     return compareFlush(selectedCards);
                 } else if (combination.equals("Full House")) {
                     return compareFullHouse(selectedCards);
+                } else if (combination.equals("Four of a kind")) {
+                    return compareFourOfAKind(selectedCards);
                 }
             }
         return false;
@@ -648,7 +667,7 @@ public class GamePanel {
         }
 
         // add minimum four cards move
-        ArrayList<Card> fourCards = new ArrayList<>();
+        ArrayList<ArrayList<Card>> fours = new ArrayList<>();
         for (int i = 0; i < sortedSecondHalfObjects.size() - 3; i++) {
             Card card1 = sortedSecondHalfObjects.get(i);
             Card card2 = sortedSecondHalfObjects.get(i + 1);
@@ -656,13 +675,16 @@ public class GamePanel {
             Card card4 = sortedSecondHalfObjects.get(i + 3);
             if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue()
             && card1.getRankValue() == card4.getRankValue()) {
-                fourCards.add(card1);
-                fourCards.add(card2);
-                fourCards.add(card3);
-                fourCards.add(card4);
-                possibleMoves.add(fourCards);
-                break;
+                ArrayList<Card> four = new ArrayList<>();
+                four.add(card1);
+                four.add(card2);
+                four.add(card3);
+                four.add(card4);
+                fours.add(four);
             }
+        }
+        if (!fours.isEmpty()) {
+            possibleMoves.add(fours.get(0));
         }
 
         // add minimum straight move
@@ -777,9 +799,38 @@ public class GamePanel {
             }
         }
 
+        ArrayList<Card> fourOfAKind = new ArrayList<>();
+        if (!fours.isEmpty() && !singleCard.isEmpty() && sortedSecondHalfObjects.size() > 4) {
+            ArrayList<Card> four = fours.get(0);
+            if (four.get(0).getRankValue() == singleCard.get(0).getRankValue()) {
+                for (Card card: sortedSecondHalfObjects) {
+                    if (four.get(0).getRankValue() != card.getRankValue()) {
+                        singleCard.clear();
+                        singleCard.add(card);
+                    }
+                }
+            }
+            if (four.get(0).getRankValue() > singleCard.get(0).getRankValue()) {
+                fourOfAKind.add(singleCard.get(0));
+                fourOfAKind.add(four.get(0));
+                fourOfAKind.add(four.get(1));
+                fourOfAKind.add(four.get(2));
+                fourOfAKind.add(four.get(3));
+                possibleMoves.add(fourOfAKind);
+            }
+            if (four.get(0).getRankValue() < singleCard.get(0).getRankValue()) {
+                fourOfAKind.add(four.get(0));
+                fourOfAKind.add(four.get(1));
+                fourOfAKind.add(four.get(2));
+                fourOfAKind.add(four.get(3));
+                fourOfAKind.add(singleCard.get(0));
+                possibleMoves.add(fourOfAKind);
+            }
+        }
+
         // random order of arraylist and selected the first one for computer move
-        if (!fullHouse.isEmpty()) {
-            computerSelectedCards.addAll(fullHouse);
+        if (!fourOfAKind.isEmpty()) {
+            computerSelectedCards.addAll(fourOfAKind);
             renderComputerCardInTable(computerSelectedCards);
         } else {
             Collections.shuffle(possibleMoves);
@@ -1152,7 +1203,7 @@ public class GamePanel {
             if (card1.getRankValue() == card2.getRankValue()) {
                 // check if it is repeated with possible triples
                 for (ArrayList<Card> triple: triples) {
-                    if (card1.getRankValue() == triple.get(0).getRankValue()) {
+                    if (card1.getRankValue() != triple.get(0).getRankValue()) {
                         pair.add(card1);
                         pair.add(card2);
                         break;
@@ -1226,6 +1277,97 @@ public class GamePanel {
             }
         }
     }
+    public void computerFourOfAKind() {
+        computerPass = true;
+        // find four cards
+        ArrayList<ArrayList<Card>> fours = new ArrayList<>();
+        for (int i = 0; i < sortedSecondHalfObjects.size() - 3; i++) {
+            Card card1 = sortedSecondHalfObjects.get(i);
+            Card card2 = sortedSecondHalfObjects.get(i + 1);
+            Card card3 = sortedSecondHalfObjects.get(i + 2);
+            Card card4 = sortedSecondHalfObjects.get(i + 3);
+            if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue()
+            && card1.getRankValue() == card4.getRankValue()) {
+                ArrayList<Card> four = new ArrayList<>();
+                four.add(card1);
+                four.add(card2);
+                four.add(card3);
+                four.add(card4);
+                fours.add(four);
+            }
+        }
+
+        // get the smallest possible single card but not equal to the 4 cards combination
+        ArrayList<Card> singleCard = new ArrayList<>();
+        if (!fours.isEmpty()) {
+            for (Card card : sortedSecondHalfObjects) {
+                for (ArrayList<Card> four : fours) {
+                    if (four.get(0).getRankValue() != card.getRankValue()) {
+                        singleCard.add(card);
+                        break;
+                    }
+                }
+                if (!singleCard.isEmpty()) {
+                    break;
+                }
+            }
+        }
+
+        boolean fourOfAKind = !fours.isEmpty() && !singleCard.isEmpty();
+
+        // if table is straight or flush or full house and computer has a four of a kind
+        if ((checkStraight(cardTableObjects) || checkFlush(cardTableObjects) || checkFullHouse(cardTableObjects)) && fourOfAKind) {
+            ArrayList<Card> smallestFour = fours.get(0);
+            // add the smaller pair/triples first
+            if (smallestFour.get(0).getRankValue() > singleCard.get(0).getRankValue()) {
+                computerSelectedCards.add(singleCard.get(0));
+                computerSelectedCards.add(smallestFour.get(0));
+                computerSelectedCards.add(smallestFour.get(1));
+                computerSelectedCards.add(smallestFour.get(2));
+                computerSelectedCards.add(smallestFour.get(3));
+            } else {
+                computerSelectedCards.add(smallestFour.get(0));
+                computerSelectedCards.add(smallestFour.get(1));
+                computerSelectedCards.add(smallestFour.get(2));
+                computerSelectedCards.add(smallestFour.get(3));
+                computerSelectedCards.add(singleCard.get(0));
+            }
+            renderComputerCardInTable(computerSelectedCards);
+            computerPass = false;
+        }
+
+        // find the smallest possibility
+        if (computerPass && fourOfAKind) {
+            int tableFour;
+            if (cardTableObjects.get(0).getRankValue() == cardTableObjects.get(3).getRankValue()) {
+                tableFour = cardTableObjects.get(0).getRankValue();
+            } else {
+                tableFour = cardTableObjects.get(4).getRankValue();
+            }
+
+            for (ArrayList<Card> four: fours) {
+                int comFour = four.get(0).getRankValue();
+                if (comFour > tableFour) {
+                    if (comFour > singleCard.get(0).getRankValue()) {
+                        computerSelectedCards.add(singleCard.get(0));
+                        computerSelectedCards.add(four.get(0));
+                        computerSelectedCards.add(four.get(1));
+                        computerSelectedCards.add(four.get(2));
+                        computerSelectedCards.add(four.get(3));
+                    } else {
+                        computerSelectedCards.add(four.get(0));
+                        computerSelectedCards.add(four.get(1));
+                        computerSelectedCards.add(four.get(2));
+                        computerSelectedCards.add(four.get(3));
+                        computerSelectedCards.add(singleCard.get(0));
+                    }
+                    renderComputerCardInTable(computerSelectedCards);
+                    computerPass = false;
+                    break;
+                }
+            }
+        }
+    }
     public void computerMove(String combination) {
         switch (combination) {
             case "Single card":
@@ -1248,15 +1390,27 @@ public class GamePanel {
                 if (computerPass) {
                     computerFullHouse();
                 }
+                if (computerPass) {
+                    computerFourOfAKind();
+                }
                 break;
             case "Flush":
                 computerFlush();
                 if (computerPass) {
                     computerFullHouse();
                 }
+                if (computerPass) {
+                    computerFourOfAKind();
+                }
                 break;
             case "Full House":
                 computerFullHouse();
+                if (computerPass) {
+                    computerFourOfAKind();
+                }
+                break;
+            case "Four of a kind":
+                computerFourOfAKind();
                 break;
         }
         if (computerPass) {
