@@ -12,6 +12,7 @@ public class GamePanel {
     final int GAME_WIDTH = 1600;
     final String[] ranks = {"3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King", "Ace", "2"};
     final String[] suits = {"Diamonds", "Clubs", "Hearts", "Spades"};
+    JLabel message = new JLabel();
     JFrame frame = new JFrame();
     JLabel label = new JLabel();
     JLabel[] handCards;
@@ -120,6 +121,7 @@ public class GamePanel {
         frame.setSize(GAME_WIDTH, 900);
         frame.setTitle("Big 2");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
         frame.setResizable(false);
         frame.getContentPane().setBackground(new Color(88, 129, 87));
 
@@ -131,6 +133,11 @@ public class GamePanel {
 
         label.setHorizontalTextPosition(JLabel.CENTER); // set text LEFT, CENTER, RIGHT of imageIcon
         label.setVerticalTextPosition(JLabel.TOP);
+
+        message.setFont(new Font("Arial", Font.BOLD, 30));
+        message.setText("Your turn");
+        message.setLayout(null);
+        message.setBounds(500, 310, 600, 600);
 
         cardDeck.setLayout(null);
         cardDeck.setBackground(new Color(178, 200, 186));
@@ -210,19 +217,34 @@ public class GamePanel {
                             numberOfCards = "Invalid";
                     }
                     if (isSelectedCardValid(numberOfCards)) {
+                        confirmButton.setEnabled(false);
+                        passButton.setEnabled(false);
                         System.out.println(numberOfCards);
                         renderCardInTable();
-                        TimerTask computer = new TimerTask() {
-                            @Override
-                            public void run() {
-                                computerMove(numberOfCards);
-                                reactivatePlayerMouseListener();
+                        if (!sortedFirstHalfObjects.isEmpty()) {
+                            TimerTask computer = new TimerTask() {
+                                @Override
+                                public void run() {
+                                    computerMove(numberOfCards);
+                                    if (!sortedSecondHalfObjects.isEmpty()) {
+                                        confirmButton.setEnabled(true);
+                                        passButton.setEnabled(true);
+                                        reactivatePlayerMouseListener();
+                                    } else {
+                                        message.setText("Computer wins!");
+                                    }
 
-                            }
-                        };
-                        System.out.println("Computer's turn");
-                        timer.schedule(computer, 3000);
+                                }
+                            };
+                            message.setText("Computer's turn");
+                            System.out.println("Computer's turn");
+                            timer.schedule(computer, 3000);
+                        } else {
+                            message.setText("You win!");
+                        }
+
                     } else {
+                        message.setText("Invalid");
                         System.out.println("Invalid");
                     }
                     break;
@@ -233,32 +255,45 @@ public class GamePanel {
                     if (isSelectedCardValid(getPlayerCombination)) {
                         System.out.println(getPlayerCombination);
                         renderCardInTable();
-                        TimerTask computer = new TimerTask() {
-                            @Override
-                            public void run() {
-                                computerMove(getPlayerCombination);
-                                reactivatePlayerMouseListener();
-                            }
-                        };
-                        System.out.println("Computer's turn");
-                        timer.schedule(computer, 3000);
-                        break;
+                        if (!sortedFirstHalfObjects.isEmpty()) {
+                            TimerTask computer = new TimerTask() {
+                                @Override
+                                public void run() {
+                                    computerMove(getPlayerCombination);
+                                    if (!sortedSecondHalfObjects.isEmpty()) {
+                                        confirmButton.setEnabled(true);
+                                        passButton.setEnabled(true);
+                                        reactivatePlayerMouseListener();
+                                    } else {
+                                        message.setText("Computer wins!");
+                                    }
+                                }
+                            };
+                            message.setText("Computer's turn");
+                            System.out.println("Computer's turn");
+                            timer.schedule(computer, 3000);
+                        } else {
+                            message.setText("You win!");
+                        }
                     } else {
+                        message.setText("Invalid");
                         System.out.println("Invalid");
                     }
-                    break;
             }
         });
 
         passButton.addActionListener(e -> {
             confirmButton.setEnabled(false);
+            passButton.setEnabled(false);
             TimerTask computer = new TimerTask() {
                 @Override
                 public void run() {
                     computerRandomMove();
                     confirmButton.setEnabled(true);
+                    passButton.setEnabled(true);
                 }
             };
+            message.setText("Computer's turn");
             System.out.println("Computer's turn");
             timer.schedule(computer, 3000);
         });
@@ -269,6 +304,7 @@ public class GamePanel {
         frame.add(cardTable);
         frame.add(confirmButton);
         frame.add(passButton);
+        frame.add(message);
 }
     public String getFiveCardCombination(ArrayList<Card> cards) {
         boolean checkStraight = checkStraight(cards);
@@ -894,6 +930,7 @@ public class GamePanel {
             computerSelectedCards.addAll(getRandomMove);
             renderComputerCardInTable(computerSelectedCards);
         }
+        message.setText("Your turn");
     }
     public void computerSingleCard() {
         computerPass = true;
@@ -1517,7 +1554,10 @@ public class GamePanel {
                 computerStraightFlush();
         }
         if (computerPass) {
+            message.setText("Computer Pass");
             System.out.println("Pass");
+        } else {
+            message.setText("Your turn");
         }
     }
     public void renderComputerCardInTable(ArrayList<Card> computerSelectedCards) {
