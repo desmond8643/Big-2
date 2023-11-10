@@ -137,7 +137,7 @@ public class GamePanel {
         message.setFont(new Font("Arial", Font.BOLD, 30));
         message.setText("Your turn");
         message.setLayout(null);
-        message.setBounds(500, 310, 600, 600);
+        message.setBounds(725 , 310, 600, 600);
 
         cardDeck.setLayout(null);
         cardDeck.setBackground(new Color(178, 200, 186));
@@ -219,7 +219,6 @@ public class GamePanel {
                     if (isSelectedCardValid(numberOfCards)) {
                         confirmButton.setEnabled(false);
                         passButton.setEnabled(false);
-                        System.out.println(numberOfCards);
                         renderCardInTable();
                         if (!sortedFirstHalfObjects.isEmpty()) {
                             TimerTask computer = new TimerTask() {
@@ -232,20 +231,22 @@ public class GamePanel {
                                         reactivatePlayerMouseListener();
                                     } else {
                                         message.setText("Computer wins!");
+                                        message.setBounds(680 , 310, 600, 600);
                                     }
 
                                 }
                             };
                             message.setText("Computer's turn");
-                            System.out.println("Computer's turn");
+                            message.setBounds(680 , 310, 600, 600);
                             timer.schedule(computer, 3000);
                         } else {
                             message.setText("You win!");
+                            message.setBounds(725 , 310, 600, 600);
                         }
 
                     } else {
                         message.setText("Invalid");
-                        System.out.println("Invalid");
+                        message.setBounds(770 , 310, 600, 600);
                     }
                     break;
                 case 5:
@@ -266,18 +267,20 @@ public class GamePanel {
                                         reactivatePlayerMouseListener();
                                     } else {
                                         message.setText("Computer wins!");
+                                        message.setBounds(680 , 310, 600, 600);
                                     }
                                 }
                             };
                             message.setText("Computer's turn");
-                            System.out.println("Computer's turn");
+                            message.setBounds(680 , 310, 600, 600);
                             timer.schedule(computer, 3000);
                         } else {
                             message.setText("You win!");
+                            message.setBounds(725 , 310, 600, 600);
                         }
                     } else {
                         message.setText("Invalid");
-                        System.out.println("Invalid");
+                        message.setBounds(770 , 310, 600, 600);
                     }
             }
         });
@@ -294,7 +297,7 @@ public class GamePanel {
                 }
             };
             message.setText("Computer's turn");
-            System.out.println("Computer's turn");
+            message.setBounds(680 , 310, 600, 600);
             timer.schedule(computer, 3000);
         });
 
@@ -931,6 +934,7 @@ public class GamePanel {
             renderComputerCardInTable(computerSelectedCards);
         }
         message.setText("Your turn");
+        message.setBounds(725 , 310, 600, 600);
     }
     public void computerSingleCard() {
         computerPass = true;
@@ -1558,6 +1562,7 @@ public class GamePanel {
             System.out.println("Pass");
         } else {
             message.setText("Your turn");
+            message.setBounds(725 , 310, 600, 600);
         }
     }
     public void renderComputerCardInTable(ArrayList<Card> computerSelectedCards) {
