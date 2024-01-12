@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,7 +13,6 @@ public class GamePanel {
     final String[] suits = {"Diamonds", "Clubs", "Hearts", "Spades"};
     JLabel message = new JLabel();
     JFrame frame = new JFrame();
-    JLabel label = new JLabel();
     JLabel[] handCards;
     JPanel cardDeck = new JPanel();
     JPanel cardTable = new JPanel();
@@ -30,6 +28,10 @@ public class GamePanel {
     ArrayList<Card>sortedFirstHalfObjects = new ArrayList<>();
     ArrayList<Card>sortedSecondHalfObjects = new ArrayList<>();
     Timer timer = new Timer();
+    JMenuBar menuBar = new JMenuBar();
+    JMenu optionMenu = new JMenu("Option");
+    JMenuItem playAgainItem = new JMenuItem("Play Again (P)");
+    JMenuItem exitItem = new JMenuItem("Exit (E)");
 
     public void createShuffledCards() {
         ArrayList<Card> cards = new ArrayList<Card>();
@@ -56,7 +58,7 @@ public class GamePanel {
         // forward loop sort
         for (int i = 1; i <= ranks.length; i++) {
             for (int j = 1; j <= suits.length; j++) {
-                for (Card card : firstHalf) {
+                for (Card card : firstHalf) { // 
                     if (card.getSuitValue() == j && card.getRankValue() == i) {
                         sortedFirstHalf.add(card.name());
                         sortedFirstHalfObjects.add(card);
@@ -124,15 +126,6 @@ public class GamePanel {
         frame.setLocationRelativeTo(null);
         frame.setResizable(false);
         frame.getContentPane().setBackground(new Color(88, 129, 87));
-
-        label.setText("Big 2");
-        label.setFont(new Font("Arial", Font.BOLD, 30));
-        label.setVerticalAlignment(JLabel.TOP); // set vertical position of icon+text within label
-        label.setHorizontalAlignment(JLabel.CENTER); // set horizontal position of icon+text within label
-        label.setBounds(500, 15, 600, 600); // set x, y position within frame as well as dimensions
-
-        label.setHorizontalTextPosition(JLabel.CENTER); // set text LEFT, CENTER, RIGHT of imageIcon
-        label.setVerticalTextPosition(JLabel.TOP);
 
         message.setFont(new Font("Arial", Font.BOLD, 30));
         message.setText("Your turn");
@@ -300,6 +293,23 @@ public class GamePanel {
             message.setBounds(680 , 310, 600, 600);
             timer.schedule(computer, 3000);
         });
+
+        exitItem.addActionListener(e -> {
+            System.exit(0);
+        });
+
+        playAgainItem.addActionListener(e -> {
+            resetGame();
+        });
+
+        optionMenu.setMnemonic(KeyEvent.VK_O);
+        playAgainItem.setMnemonic(KeyEvent.VK_P);
+        exitItem.setMnemonic(KeyEvent.VK_E);
+
+        optionMenu.add(playAgainItem);
+        optionMenu.add(exitItem);
+        menuBar.add(optionMenu);
+        frame.setJMenuBar(menuBar);
 
         frame.setLayout(null);
         frame.add(cardDeck);
@@ -1703,5 +1713,95 @@ public class GamePanel {
             case "Straight Flush" -> 5;
             default -> 0;
         };
+    }
+
+    private void resetGame() {
+        cardDeck.removeAll();
+        cardDeck.revalidate();
+        cardDeck.repaint();
+        sortedFirstHalf.clear();
+        sortedFirstHalfObjects.clear();
+
+        cardTable.removeAll();
+        cardTable.revalidate();
+        cardTable.repaint();
+        cardTableImages.clear();
+        cardTableObjects.clear();
+
+        sortedSecondHalf.clear();
+        sortedSecondHalfObjects.clear();
+        computerCardDeck.removeAll();
+        computerCardDeck.revalidate();
+        computerCardDeck.repaint();
+
+        createShuffledCards();
+
+        // Player card reset
+        ArrayList<ImageIcon> cardImages = new ArrayList<>();
+        for (String cardName: sortedFirstHalf) {
+            String cardPath = String.format("src/small-cards/%s.png", cardName);
+            cardImages.add(new ImageIcon(cardPath));
+        }
+
+        handCards = new JLabel[cardImages.size()];
+        for (int i = 0; i < cardImages.size(); i++) {
+            handCards[i] = new JLabel();
+            handCards[i].setIcon(cardImages.get(i));
+        }
+
+        for (JLabel handCard : handCards) {
+            cardDeck.add(handCard);
+        }
+
+        int cardHandLength = sortedFirstHalfObjects.size();
+        int gap = CARD_WIDTH + (GAME_WIDTH - (cardHandLength * CARD_WIDTH)) / (cardHandLength + 2);
+        for (int i = 0; i < handCards.length; i++) {
+            handCards[i].setBounds((i + 1) * gap - 100, 20, 102, 153);
+        }
+
+        MouseListener[] playerMouseListeners = new MouseListener[handCards.length];
+
+        for (int i = 0; i < handCards.length; i++) {
+            final int index = i;
+            playerMouseListeners[index] = new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (selectedCards.contains(sortedFirstHalfObjects.get(index))) {
+                        selectedCards.remove(sortedFirstHalfObjects.get(index));
+                        handCards[index].setBounds((index + 1) * gap - 100 , 20, 102, 153);
+                        System.out.println(selectedCards);
+                    } else if (selectedCards.size() < 5) {
+                        selectedCards.add(sortedFirstHalfObjects.get(index));
+                        handCards[index].setBounds((index + 1) * gap - 100 , 0, 102, 153);
+                        System.out.println(selectedCards);
+                    } else {
+                        System.out.println("Selected more than 5 cards");
+                    }
+                }
+            };
+            handCards[i].addMouseListener(playerMouseListeners[i]);
+        }
+
+        ArrayList<ImageIcon> computerCardImages = new ArrayList<>();
+        for (String cardName: sortedSecondHalf) {
+            String cardPath = String.format("src/small-cards/%s.png", cardName);
+            computerCardImages.add(new ImageIcon(cardPath));
+        }
+
+        JLabel[] handCards = new JLabel[computerCardImages.size()];
+        for (int i = 0; i < computerCardImages.size(); i++) {
+            handCards[i] = new JLabel();
+            handCards[i].setIcon(computerCardImages.get(i));
+        }
+
+        for (JLabel handCard : handCards) {
+            computerCardDeck.add(handCard);
+        }
+
+        int computerCardHandLength = sortedSecondHalfObjects.size();
+        int computerGap = CARD_WIDTH + (GAME_WIDTH - (computerCardHandLength * CARD_WIDTH)) / (computerCardHandLength + 2);
+        for (int i = 0; i < handCards.length; i++) {
+            handCards[i].setBounds((i + 1) * computerGap - 100, 20, 102, 153);
+        }
     }
 }
