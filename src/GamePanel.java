@@ -105,6 +105,14 @@ public class GamePanel {
             computerHandCards[i].setIcon(computerCardImages.get(i));
         }
 
+        JLabel backgroundLabel = new JLabel(new ImageIcon("src/background/poker-background.jpg"));
+        backgroundLabel.setBounds(0, 0, GAME_WIDTH, 900);
+
+        JPanel backgroundPanel = new JPanel();
+        backgroundPanel.setLayout(null);
+        backgroundPanel.setBounds(0, 0, GAME_WIDTH, 900);
+        backgroundPanel.add(backgroundLabel);
+
         confirmButton.setText("Confirm");
         confirmButton.setFocusable(false);
         confirmButton.setFont(new Font("Arial", Font.BOLD, 15));
@@ -127,20 +135,23 @@ public class GamePanel {
         frame.setResizable(false);
         frame.getContentPane().setBackground(new Color(88, 129, 87));
 
-        message.setFont(new Font("Arial", Font.BOLD, 30));
+        message.setFont(new Font("Agency FB", Font.BOLD, 30));
         message.setText("Your turn");
         message.setLayout(null);
         message.setBounds(725 , 310, 600, 600);
+        message.setForeground(Color.WHITE);
 
         cardDeck.setLayout(null);
-        cardDeck.setBackground(new Color(178, 200, 186));
+//        cardDeck.setBackground(new Color(178, 200, 186));
+        cardDeck.setOpaque(false);
         cardDeck.setBounds(0, 650, GAME_WIDTH, 250);
         for (JLabel handCard : handCards) {
             cardDeck.add(handCard);
         }
 
         computerCardDeck.setLayout(null);
-        computerCardDeck.setBackground(new Color(178, 200, 186));
+//        computerCardDeck.setBackground(new Color(178, 200, 186));
+        computerCardDeck.setOpaque(false);
         computerCardDeck.setBounds(0, 0, GAME_WIDTH, 250);
         for (JLabel computerHandCard : computerHandCards) {
             computerCardDeck.add(computerHandCard);
@@ -159,7 +170,8 @@ public class GamePanel {
         }
 
         cardTable.setLayout(null);
-        cardTable.setBackground(new Color(178, 200, 186));
+//        cardTable.setBackground(new Color(178, 200, 186));
+        cardTable.setOpaque(false);
         cardTable.setBounds(0, 325, GAME_WIDTH, 250);
 
         MouseListener[] playerMouseListeners = new MouseListener[handCards.length];
@@ -318,6 +330,8 @@ public class GamePanel {
         frame.add(confirmButton);
         frame.add(passButton);
         frame.add(message);
+        frame.add(backgroundPanel);
+
 }
     public String getFiveCardCombination(ArrayList<Card> cards) {
         boolean checkStraight = checkStraight(cards);
@@ -1716,6 +1730,10 @@ public class GamePanel {
     }
 
     private void resetGame() {
+        message.setText("Your Turn");
+        passButton.setEnabled(true);
+        confirmButton.setEnabled(true);
+
         cardDeck.removeAll();
         cardDeck.revalidate();
         cardDeck.repaint();
