@@ -2,15 +2,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class GamePanel {
     boolean computerPass = false;
     final int CARD_WIDTH = 102;
     final int GAME_WIDTH = 1600;
-    final String[] ranks = {"3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King", "Ace", "2"};
-    final String[] suits = {"Diamonds", "Clubs", "Hearts", "Spades"};
     JLabel message = new JLabel();
     JFrame frame = new JFrame();
     JLabel[] handCards;
@@ -23,66 +19,21 @@ public class GamePanel {
     ArrayList<Card> computerSelectedCards = new ArrayList<>();
     ArrayList<Card> cardTableObjects = new ArrayList<>();
     ArrayList<ImageIcon> cardTableImages = new ArrayList<>();
-    ArrayList<String>sortedFirstHalf = new ArrayList<>();
-    ArrayList<String>sortedSecondHalf = new ArrayList<>();
-    ArrayList<Card>sortedFirstHalfObjects = new ArrayList<>();
-    ArrayList<Card>sortedSecondHalfObjects = new ArrayList<>();
-    Timer timer = new Timer();
     JMenuBar menuBar = new JMenuBar();
     JMenu optionMenu = new JMenu("Option");
     JMenuItem playAgainItem = new JMenuItem("Play Again (P)");
     JMenuItem exitItem = new JMenuItem("Exit (E)");
+    private final GameLogic gameLogic;
 
-    public void createShuffledCards() {
-        ArrayList<Card> cards = new ArrayList<Card>();
-
-        // add all the cards objects with its attribute to the card ArrayList
-        for (String suit : suits) {
-            for (int value = 0; value < ranks.length; value++) {
-                Card card = new Card(ranks[value], suit, value + 1, getSuitValue(suit));
-                cards.add(card);
-            }
-        }
-        // Shuffle cards (ArrayList)
-        Collections.shuffle(cards);
-
-        // Create a new object of array that stores the shuffled card
-        Card[] shuffledCards = new Card[cards.size()];
-        cards.toArray(shuffledCards);
-
-        // Create a copy of the first half and second half of shuffled cards
-        // 2 hands (2 players)
-        Card[] firstHalf = Arrays.copyOfRange(shuffledCards, 0, 13);
-        Card[] secondHalf = Arrays.copyOfRange(shuffledCards, 13, 26);
-
-        // forward loop sort
-        for (int i = 1; i <= ranks.length; i++) {
-            for (int j = 1; j <= suits.length; j++) {
-                for (Card card : firstHalf) { // 
-                    if (card.getSuitValue() == j && card.getRankValue() == i) {
-                        sortedFirstHalf.add(card.name());
-                        sortedFirstHalfObjects.add(card);
-                    }
-                }
-            }
-        }
-
-        for (int i = 1; i <= ranks.length; i++) {
-            for (int j = 1; j <= suits.length; j++) {
-                for (Card card : secondHalf) {
-                    if (card.getSuitValue() == j && card.getRankValue() == i) {
-                        sortedSecondHalf.add(card.name());
-                        sortedSecondHalfObjects.add(card);
-                    }
-                }
-            }
-        }
-    }
     GamePanel() {
-        createShuffledCards();
+        gameLogic = new GameLogic(this);
+        gameLogic.createShuffledCards();
+        initializeButtons();
+        initializeFrame();
+        initializeMessage();
 
         ArrayList<ImageIcon> cardImages = new ArrayList<>();
-            for (String cardName: sortedFirstHalf) {
+            for (String cardName: gameLogic.sortedFirstHalf) {
             String cardPath = String.format("src/small-cards/%s.png", cardName);
             cardImages.add(new ImageIcon(cardPath));
         }
@@ -94,7 +45,7 @@ public class GamePanel {
         }
 
         ArrayList<ImageIcon> computerCardImages = new ArrayList<>();
-            for (String cardName: sortedSecondHalf) {
+            for (String cardName: gameLogic.sortedSecondHalf) {
             String cardPath = String.format("src/small-cards/%s.png", cardName);
             computerCardImages.add(new ImageIcon(cardPath));
         }
@@ -113,36 +64,9 @@ public class GamePanel {
         backgroundPanel.setBounds(0, 0, GAME_WIDTH, 900);
         backgroundPanel.add(backgroundLabel);
 
-        confirmButton.setText("Confirm");
-        confirmButton.setFocusable(false);
-        confirmButton.setFont(new Font("Arial", Font.BOLD, 15));
-        confirmButton.setBounds(1500, 585, 75, 50);
-        confirmButton.setBackground(new Color(235, 243, 232));
-        confirmButton.setBorder(BorderFactory.createEmptyBorder());
 
-        passButton.setText("Pass");
-        passButton.setFocusable(false);
-        passButton.setFont(new Font("Arial", Font.BOLD, 15));
-        passButton.setBounds(1400, 585, 75, 50);
-        passButton.setBackground(new Color(235, 243, 232));
-        passButton.setBorder(BorderFactory.createEmptyBorder());
-
-        frame.setVisible(true);
-        frame.setSize(GAME_WIDTH, 900);
-        frame.setTitle("Big 2");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setResizable(false);
-        frame.getContentPane().setBackground(new Color(88, 129, 87));
-
-        message.setFont(new Font("Agency FB", Font.BOLD, 30));
-        message.setText("Your turn");
-        message.setLayout(null);
-        message.setBounds(725 , 310, 600, 600);
-        message.setForeground(Color.WHITE);
 
         cardDeck.setLayout(null);
-//        cardDeck.setBackground(new Color(178, 200, 186));
         cardDeck.setOpaque(false);
         cardDeck.setBounds(0, 650, GAME_WIDTH, 250);
         for (JLabel handCard : handCards) {
@@ -150,27 +74,25 @@ public class GamePanel {
         }
 
         computerCardDeck.setLayout(null);
-//        computerCardDeck.setBackground(new Color(178, 200, 186));
         computerCardDeck.setOpaque(false);
         computerCardDeck.setBounds(0, 0, GAME_WIDTH, 250);
         for (JLabel computerHandCard : computerHandCards) {
             computerCardDeck.add(computerHandCard);
         }
 
-        int cardHandLength = sortedFirstHalfObjects.size();
+        int cardHandLength = gameLogic.sortedFirstHalfObjects.size();
         int gap = CARD_WIDTH + (GAME_WIDTH - (cardHandLength * CARD_WIDTH)) / (cardHandLength + 2);
         for (int i = 0; i < handCards.length; i++) {
             handCards[i].setBounds((i + 1) * gap - 100, 20, 102, 153);
         }
 
-        int computerCardHandLength = sortedSecondHalfObjects.size();
+        int computerCardHandLength = gameLogic.sortedSecondHalfObjects.size();
         int computerCardGap = CARD_WIDTH + (GAME_WIDTH - (computerCardHandLength * CARD_WIDTH)) / (computerCardHandLength + 2);
         for (int i = 0; i < computerHandCards.length; i++) {
             computerHandCards[i].setBounds((i + 1) * computerCardGap - 100, 20, 102, 153);
         }
 
         cardTable.setLayout(null);
-//        cardTable.setBackground(new Color(178, 200, 186));
         cardTable.setOpaque(false);
         cardTable.setBounds(0, 325, GAME_WIDTH, 250);
 
@@ -181,12 +103,12 @@ public class GamePanel {
             playerMouseListeners[index] = new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    if (selectedCards.contains(sortedFirstHalfObjects.get(index))) {
-                        selectedCards.remove(sortedFirstHalfObjects.get(index));
+                    if (selectedCards.contains(gameLogic.sortedFirstHalfObjects.get(index))) {
+                        selectedCards.remove(gameLogic.sortedFirstHalfObjects.get(index));
                         handCards[index].setBounds((index + 1) * gap - 100 , 20, 102, 153);
                         System.out.println(selectedCards);
                     } else if (selectedCards.size() < 5) {
-                        selectedCards.add(sortedFirstHalfObjects.get(index));
+                        selectedCards.add(gameLogic.sortedFirstHalfObjects.get(index));
                         handCards[index].setBounds((index + 1) * gap - 100 , 0, 102, 153);
                         System.out.println(selectedCards);
                     } else {
@@ -196,115 +118,6 @@ public class GamePanel {
             };
             handCards[i].addMouseListener(playerMouseListeners[i]);
         }
-
-        confirmButton.addActionListener(e -> {
-            sortSelectedCards();
-
-            int selectedCardSize = selectedCards.size();
-            String numberOfCards;
-
-            switch (selectedCardSize) {
-                case 1, 2, 3, 4:
-                    switch (selectedCardSize) {
-                        case 1:
-                            numberOfCards = "Single card";
-                            break;
-                        case 2:
-                            numberOfCards = "Pair";
-                            break;
-                        case 3:
-                            numberOfCards = "Triples";
-                            break;
-                        case 4:
-                            numberOfCards = "Four cards";
-                            break;
-                        default:
-                            numberOfCards = "Invalid";
-                    }
-                    if (isSelectedCardValid(numberOfCards)) {
-                        confirmButton.setEnabled(false);
-                        passButton.setEnabled(false);
-                        renderCardInTable();
-                        if (!sortedFirstHalfObjects.isEmpty()) {
-                            TimerTask computer = new TimerTask() {
-                                @Override
-                                public void run() {
-                                    computerMove(numberOfCards);
-                                    if (!sortedSecondHalfObjects.isEmpty()) {
-                                        confirmButton.setEnabled(true);
-                                        passButton.setEnabled(true);
-                                        reactivatePlayerMouseListener();
-                                    } else {
-                                        message.setText("Computer wins!");
-                                        message.setBounds(680 , 310, 600, 600);
-                                    }
-
-                                }
-                            };
-                            message.setText("Computer's turn");
-                            message.setBounds(680 , 310, 600, 600);
-                            timer.schedule(computer, 3000);
-                        } else {
-                            message.setText("You win!");
-                            message.setBounds(725 , 310, 600, 600);
-                        }
-
-                    } else {
-                        message.setText("Invalid");
-                        message.setBounds(770 , 310, 600, 600);
-                    }
-                    break;
-                case 5:
-                    // check player combination
-                    String getPlayerCombination = getFiveCardCombination(selectedCards);
-
-                    if (isSelectedCardValid(getPlayerCombination)) {
-                        System.out.println(getPlayerCombination);
-                        renderCardInTable();
-                        if (!sortedFirstHalfObjects.isEmpty()) {
-                            TimerTask computer = new TimerTask() {
-                                @Override
-                                public void run() {
-                                    computerMove(getPlayerCombination);
-                                    if (!sortedSecondHalfObjects.isEmpty()) {
-                                        confirmButton.setEnabled(true);
-                                        passButton.setEnabled(true);
-                                        reactivatePlayerMouseListener();
-                                    } else {
-                                        message.setText("Computer wins!");
-                                        message.setBounds(680 , 310, 600, 600);
-                                    }
-                                }
-                            };
-                            message.setText("Computer's turn");
-                            message.setBounds(680 , 310, 600, 600);
-                            timer.schedule(computer, 3000);
-                        } else {
-                            message.setText("You win!");
-                            message.setBounds(725 , 310, 600, 600);
-                        }
-                    } else {
-                        message.setText("Invalid");
-                        message.setBounds(770 , 310, 600, 600);
-                    }
-            }
-        });
-
-        passButton.addActionListener(e -> {
-            confirmButton.setEnabled(false);
-            passButton.setEnabled(false);
-            TimerTask computer = new TimerTask() {
-                @Override
-                public void run() {
-                    computerRandomMove();
-                    confirmButton.setEnabled(true);
-                    passButton.setEnabled(true);
-                }
-            };
-            message.setText("Computer's turn");
-            message.setBounds(680 , 310, 600, 600);
-            timer.schedule(computer, 3000);
-        });
 
         exitItem.addActionListener(e -> {
             System.exit(0);
@@ -333,6 +146,39 @@ public class GamePanel {
         frame.add(backgroundPanel);
 
 }
+    private void initializeMessage() {
+        message.setFont(new Font("Agency FB", Font.BOLD, 30));
+        message.setText("Your turn");
+        message.setLayout(null);
+        message.setBounds(725 , 310, 600, 600);
+        message.setForeground(Color.WHITE);
+    }
+    private void initializeButtons() {
+        confirmButton.setText("Confirm");
+        confirmButton.setFocusable(false);
+        confirmButton.setFont(new Font("Arial", Font.BOLD, 15));
+        confirmButton.setBounds(1500, 585, 75, 50);
+        confirmButton.setBackground(new Color(235, 243, 232));
+        confirmButton.setBorder(BorderFactory.createEmptyBorder());
+
+        passButton.setText("Pass");
+        passButton.setFocusable(false);
+        passButton.setFont(new Font("Arial", Font.BOLD, 15));
+        passButton.setBounds(1400, 585, 75, 50);
+        passButton.setBackground(new Color(235, 243, 232));
+        passButton.setBorder(BorderFactory.createEmptyBorder());
+    }
+
+    private void initializeFrame() {
+        frame.setVisible(true);
+        frame.setSize(GAME_WIDTH, 900);
+        frame.setTitle("Big 2");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+        frame.setResizable(false);
+        frame.getContentPane().setBackground(new Color(88, 129, 87));
+    }
+
     public String getFiveCardCombination(ArrayList<Card> cards) {
         boolean checkStraight = checkStraight(cards);
         boolean checkFlush = checkFlush(cards);
@@ -355,8 +201,8 @@ public class GamePanel {
     public void sortSelectedCards() {
         // sort selectedCard
         ArrayList<Card> sortedSelectedCards = new ArrayList<>();
-        for (int i = 1; i <= ranks.length; i++) {
-            for (int j = 1; j <= suits.length; j++) {
+        for (int i = 1; i <= gameLogic.ranks.length; i++) {
+            for (int j = 1; j <= gameLogic.suits.length; j++) {
                 for (Card selectedCard : selectedCards) {
                     if (selectedCard.getSuitValue() == j && selectedCard.getRankValue() == i) {
                         sortedSelectedCards.add(selectedCard);
@@ -595,16 +441,20 @@ public class GamePanel {
         return selectedLast2Sum > tableLast2Sum;
     }
     public boolean isSelectedCardValid(String combination) {
-        switch(combination) {
-            case "Single card":
+        switch (combination) {
+            case "Single card" -> {
                 return checkSingleCard();
-            case "Pair":
+            }
+            case "Pair" -> {
                 return checkPair();
-            case "Triples":
+            }
+            case "Triples" -> {
                 return checkTriples();
-            case "Four cards":
+            }
+            case "Four cards" -> {
                 return checkFourCards();
-            case "Straight", "Flush", "Full House", "Four of a kind", "Straight Flush":
+            }
+            case "Straight", "Flush", "Full House", "Four of a kind", "Straight Flush" -> {
                 // if it is a pass or table is empty => valid
                 if (cardTableObjects.isEmpty() || computerPass) {
                     computerPass = false;
@@ -638,49 +488,23 @@ public class GamePanel {
                     return compareStraightFlush(selectedCards);
                 }
             }
+        }
         return false;
     }
-    public void reactivatePlayerMouseListener() {
-        MouseListener[] playerMouseListeners = new MouseListener[handCards.length];
-        int cardHandLength = sortedFirstHalfObjects.size();
-        int gap = CARD_WIDTH + (GAME_WIDTH - (cardHandLength * CARD_WIDTH)) / (cardHandLength + 2);
-
-        for (int i = 0; i < handCards.length; i++) {
-            final int index = i;
-            playerMouseListeners[index] = new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (selectedCards.contains(sortedFirstHalfObjects.get(index))) {
-                        selectedCards.remove(sortedFirstHalfObjects.get(index));
-                        handCards[index].setBounds((index + 1) * gap - 100 , 20, 102, 153);
-                        System.out.println(selectedCards);
-                    } else if (selectedCards.size() < 5) {
-                        selectedCards.add(sortedFirstHalfObjects.get(index));
-                        handCards[index].setBounds((index + 1) * gap - 100 , 0, 102, 153);
-                        System.out.println(selectedCards);
-                    } else {
-                        System.out.println("Selected more than 5 cards");
-                    }
-                }
-            };
-            handCards[i].addMouseListener(playerMouseListeners[i]);
-        }
-    }
-
     public void computerRandomMove() {
         // check all computer possible move and randomly choose one move
         ArrayList<ArrayList<Card>> possibleMoves = new ArrayList<>();
 
         // add minimum single card move
         ArrayList<Card> singleCard = new ArrayList<>();
-        singleCard.add(sortedSecondHalfObjects.get(0));
+        singleCard.add(gameLogic.sortedSecondHalfObjects.get(0));
         possibleMoves.add(singleCard);
 
         // add minimum pair card move
         ArrayList<Card> pair = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 1; i++) {
-            Card card1 = sortedSecondHalfObjects.get(i);
-            Card card2 = sortedSecondHalfObjects.get(i + 1);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 1; i++) {
+            Card card1 = gameLogic.sortedSecondHalfObjects.get(i);
+            Card card2 = gameLogic.sortedSecondHalfObjects.get(i + 1);
             if (card1.getRankValue() == card2.getRankValue()) {
                 pair.add(card1);
                 pair.add(card2);
@@ -691,10 +515,10 @@ public class GamePanel {
 
         // add minimum triples card move
         ArrayList<ArrayList<Card>> triples = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 2; i++) {
-            Card card1 = sortedSecondHalfObjects.get(i);
-            Card card2 = sortedSecondHalfObjects.get(i + 1);
-            Card card3 = sortedSecondHalfObjects.get(i + 2);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 2; i++) {
+            Card card1 = gameLogic.sortedSecondHalfObjects.get(i);
+            Card card2 = gameLogic.sortedSecondHalfObjects.get(i + 1);
+            Card card3 = gameLogic.sortedSecondHalfObjects.get(i + 2);
             if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue()) {
                 ArrayList<Card> triple = new ArrayList<>();
                 triple.add(card1);
@@ -709,11 +533,11 @@ public class GamePanel {
 
         // add minimum four cards move
         ArrayList<ArrayList<Card>> fours = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 3; i++) {
-            Card card1 = sortedSecondHalfObjects.get(i);
-            Card card2 = sortedSecondHalfObjects.get(i + 1);
-            Card card3 = sortedSecondHalfObjects.get(i + 2);
-            Card card4 = sortedSecondHalfObjects.get(i + 3);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 3; i++) {
+            Card card1 = gameLogic.sortedSecondHalfObjects.get(i);
+            Card card2 = gameLogic.sortedSecondHalfObjects.get(i + 1);
+            Card card3 = gameLogic.sortedSecondHalfObjects.get(i + 2);
+            Card card4 = gameLogic.sortedSecondHalfObjects.get(i + 3);
             if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue()
             && card1.getRankValue() == card4.getRankValue()) {
                 ArrayList<Card> four = new ArrayList<>();
@@ -730,16 +554,16 @@ public class GamePanel {
 
         // add minimum straight move
         ArrayList<Card> straight = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 4; i++) {
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 4; i++) {
             if (!straight.isEmpty()) {
                 break;
             }
-            Card startCard = sortedSecondHalfObjects.get(i);
+            Card startCard = gameLogic.sortedSecondHalfObjects.get(i);
             ArrayList<Card> tempStraight = new ArrayList<>();
             tempStraight.add(startCard);
 
-            for (int j = i + 1; j < sortedSecondHalfObjects.size(); j++) {
-                Card nextCard = sortedSecondHalfObjects.get(j);
+            for (int j = i + 1; j < gameLogic.sortedSecondHalfObjects.size(); j++) {
+                Card nextCard = gameLogic.sortedSecondHalfObjects.get(j);
                 if (nextCard.getRankValue() == tempStraight.get(tempStraight.size() - 1).getRankValue() + 1) {
                     tempStraight.add(nextCard);
                 }
@@ -752,7 +576,7 @@ public class GamePanel {
         }
 
         ArrayList<Integer> sortedSecondHalfRanks = new ArrayList<>();
-        for (Card card : sortedSecondHalfObjects) {
+        for (Card card : gameLogic.sortedSecondHalfObjects) {
             sortedSecondHalfRanks.add(card.getRankValue());
         }
         if (straight.isEmpty()) {
@@ -762,7 +586,7 @@ public class GamePanel {
                 int[] cardRanks = {1, 2, 3, 4, 13};
                 ArrayList<Card> tempStraight = new ArrayList<>();
                 for (int cardRank : cardRanks) {
-                    for (Card card : sortedSecondHalfObjects) {
+                    for (Card card : gameLogic.sortedSecondHalfObjects) {
                         if (card.getRankValue() == cardRank) {
                             tempStraight.add(card);
                             break;
@@ -780,7 +604,7 @@ public class GamePanel {
                 int[] cardRanks = {1, 2, 3, 12, 13};
                 ArrayList<Card> tempStraight = new ArrayList<>();
                 for (int cardRank : cardRanks) {
-                    for (Card card : sortedSecondHalfObjects) {
+                    for (Card card : gameLogic.sortedSecondHalfObjects) {
                         if (card.getRankValue() == cardRank) {
                             tempStraight.add(card);
                             break;
@@ -794,10 +618,10 @@ public class GamePanel {
         ArrayList<Card> flush = new ArrayList<>(); // check if computer has flush
         // Usual cases
         for (int k = 1; k <= 4; k++) {
-            for (int i = 0; i <= sortedSecondHalfObjects.size() - 4; i++) {
+            for (int i = 0; i <= gameLogic.sortedSecondHalfObjects.size() - 4; i++) {
                 ArrayList<Card> tempFlush = new ArrayList<>();
-                for (int j = i; j < sortedSecondHalfObjects.size(); j++) {
-                    Card currentCard = sortedSecondHalfObjects.get(j);
+                for (int j = i; j < gameLogic.sortedSecondHalfObjects.size(); j++) {
+                    Card currentCard = gameLogic.sortedSecondHalfObjects.get(j);
                     if (currentCard.getSuitValue() == k) {
                         tempFlush.add(currentCard);
                     }
@@ -841,10 +665,10 @@ public class GamePanel {
         }
 
         ArrayList<Card> fourOfAKind = new ArrayList<>();
-        if (!fours.isEmpty() && !singleCard.isEmpty() && sortedSecondHalfObjects.size() > 4) {
+        if (!fours.isEmpty() && !singleCard.isEmpty() && gameLogic.sortedSecondHalfObjects.size() > 4) {
             ArrayList<Card> four = fours.get(0);
             if (four.get(0).getRankValue() == singleCard.get(0).getRankValue()) {
-                for (Card card: sortedSecondHalfObjects) {
+                for (Card card: gameLogic.sortedSecondHalfObjects) {
                     if (four.get(0).getRankValue() != card.getRankValue()) {
                         singleCard.clear();
                         singleCard.add(card);
@@ -871,16 +695,16 @@ public class GamePanel {
 
         // add minimum straight move
         ArrayList<Card> straightFlush = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 4; i++) {
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 4; i++) {
             if (!straightFlush.isEmpty()) {
                 break;
             }
-            Card startCard = sortedSecondHalfObjects.get(i);
+            Card startCard = gameLogic.sortedSecondHalfObjects.get(i);
             ArrayList<Card> tempStraightFlush = new ArrayList<>();
             tempStraightFlush.add(startCard);
 
-            for (int j = i + 1; j < sortedSecondHalfObjects.size(); j++) {
-                Card nextCard = sortedSecondHalfObjects.get(j);
+            for (int j = i + 1; j < gameLogic.sortedSecondHalfObjects.size(); j++) {
+                Card nextCard = gameLogic.sortedSecondHalfObjects.get(j);
                 if (nextCard.getRankValue() == tempStraightFlush.get(tempStraightFlush.size() - 1).getRankValue() + 1 &&
                 nextCard.getSuitValue() == tempStraightFlush.get(tempStraightFlush.size() - 1).getSuitValue()) {
                     tempStraightFlush.add(nextCard);
@@ -900,7 +724,7 @@ public class GamePanel {
                 int[] cardRanks = {1, 2, 3, 4, 13};
                 ArrayList<Card> tempStraightFlush = new ArrayList<>();
                 for (int cardRank : cardRanks) {
-                    for (Card card : sortedSecondHalfObjects) {
+                    for (Card card : gameLogic.sortedSecondHalfObjects) {
                         if (card.getRankValue() == cardRank) {
                             tempStraightFlush.add(card);
                             break;
@@ -927,7 +751,7 @@ public class GamePanel {
                 int[] cardRanks = {1, 2, 3, 12, 13};
                 ArrayList<Card> tempStraightFlush = new ArrayList<>();
                 for (int cardRank : cardRanks) {
-                    for (Card card : sortedSecondHalfObjects) {
+                    for (Card card : gameLogic.sortedSecondHalfObjects) {
                         if (card.getRankValue() == cardRank) {
                             tempStraightFlush.add(card);
                             break;
@@ -963,7 +787,7 @@ public class GamePanel {
     public void computerSingleCard() {
         computerPass = true;
         // check if there is a single card larger than the card on the table
-        for (Card card: sortedSecondHalfObjects) {
+        for (Card card: gameLogic.sortedSecondHalfObjects) {
             // same rank case
             Card cardOnTable = cardTableObjects.get(0);
             if (card.getRankValue() == cardOnTable.getRankValue() && card.getSuitValue() > cardOnTable.getSuitValue()) {
@@ -983,9 +807,9 @@ public class GamePanel {
         computerPass = true;
         // check if computer has pair
         ArrayList<ArrayList<Card>> pairs = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 1; i++) {
-            Card card1 = sortedSecondHalfObjects.get(i);
-            Card card2 = sortedSecondHalfObjects.get(i + 1);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 1; i++) {
+            Card card1 = gameLogic.sortedSecondHalfObjects.get(i);
+            Card card2 = gameLogic.sortedSecondHalfObjects.get(i + 1);
             if (card1.getRankValue() == card2.getRankValue()) {
                 ArrayList<Card> pair = new ArrayList<>();
                 pair.add(card1);
@@ -1015,10 +839,10 @@ public class GamePanel {
         computerPass = true;
         // check if computer has a Triple
         ArrayList<ArrayList<Card>> triples = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 2; i++) {
-            Card card1 = sortedSecondHalfObjects.get(i);
-            Card card2 = sortedSecondHalfObjects.get(i + 1);
-            Card card3 = sortedSecondHalfObjects.get(i + 2);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 2; i++) {
+            Card card1 = gameLogic.sortedSecondHalfObjects.get(i);
+            Card card2 = gameLogic.sortedSecondHalfObjects.get(i + 1);
+            Card card3 = gameLogic.sortedSecondHalfObjects.get(i + 2);
             if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue()) {
                 ArrayList<Card> triple = new ArrayList<>();
                 triple.add(card1);
@@ -1043,11 +867,11 @@ public class GamePanel {
         computerPass = true;
         // check if computer has a four
         ArrayList<ArrayList<Card>> fours = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 3; i++) {
-            Card card1 = sortedSecondHalfObjects.get(i);
-            Card card2 = sortedSecondHalfObjects.get(i + 1);
-            Card card3 = sortedSecondHalfObjects.get(i + 2);
-            Card card4 = sortedSecondHalfObjects.get(i + 3);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 3; i++) {
+            Card card1 = gameLogic.sortedSecondHalfObjects.get(i);
+            Card card2 = gameLogic.sortedSecondHalfObjects.get(i + 1);
+            Card card3 = gameLogic.sortedSecondHalfObjects.get(i + 2);
+            Card card4 = gameLogic.sortedSecondHalfObjects.get(i + 3);
             if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue() && card1.getRankValue() == card4.getRankValue()) {
                 ArrayList<Card> four = new ArrayList<>();
                 four.add(card1);
@@ -1075,13 +899,13 @@ public class GamePanel {
         ArrayList<ArrayList<Card>> straights = new ArrayList<>(); // check if computer has straight
 
         // Usual cases
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 4; i++) {
-            Card startCard = sortedSecondHalfObjects.get(i);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 4; i++) {
+            Card startCard = gameLogic.sortedSecondHalfObjects.get(i);
             ArrayList<Card> tempStraight = new ArrayList<>();
             tempStraight.add(startCard);
 
-            for (int j = i + 1; j < sortedSecondHalfObjects.size(); j++) {
-                Card nextCard = sortedSecondHalfObjects.get(j);
+            for (int j = i + 1; j < gameLogic.sortedSecondHalfObjects.size(); j++) {
+                Card nextCard = gameLogic.sortedSecondHalfObjects.get(j);
                 if (nextCard.getRankValue() == tempStraight.get(tempStraight.size() - 1).getRankValue() + 1) {
                     tempStraight.add(nextCard);
                 }
@@ -1094,7 +918,7 @@ public class GamePanel {
 
         // special case: 23456 and A2345
         ArrayList<Integer> sortedSecondHalfRanks = new ArrayList<>();
-        for (Card card: sortedSecondHalfObjects) {
+        for (Card card: gameLogic.sortedSecondHalfObjects) {
             sortedSecondHalfRanks.add(card.getRankValue());
         }
 
@@ -1104,7 +928,7 @@ public class GamePanel {
             int[] cardRanks = {1, 2, 3, 4, 13};
             ArrayList<Card> tempStraight = new ArrayList<>();
             for (int cardRank : cardRanks) {
-                for (Card card : sortedSecondHalfObjects) {
+                for (Card card : gameLogic.sortedSecondHalfObjects) {
                     if (card.getRankValue() == cardRank) {
                         tempStraight.add(card);
                         break;
@@ -1120,7 +944,7 @@ public class GamePanel {
             int[] cardRanks = {1, 2, 3, 12, 13};
             ArrayList<Card> tempStraight = new ArrayList<>();
             for (int cardRank : cardRanks) {
-                for (Card card : sortedSecondHalfObjects) {
+                for (Card card : gameLogic.sortedSecondHalfObjects) {
                     if (card.getRankValue() == cardRank) {
                         tempStraight.add(card);
                         break;
@@ -1168,10 +992,10 @@ public class GamePanel {
         ArrayList<ArrayList<Card>> flushes = new ArrayList<>(); // check if computer has flush
         // Usual cases
         for (int k = 1; k <= 4; k++) {
-            for (int i = 0; i <= sortedSecondHalfObjects.size() - 4; i++) {
+            for (int i = 0; i <= gameLogic.sortedSecondHalfObjects.size() - 4; i++) {
                 ArrayList<Card> tempFlush = new ArrayList<>();
-                for (int j = i; j < sortedSecondHalfObjects.size(); j++) {
-                    Card currentCard = sortedSecondHalfObjects.get(j);
+                for (int j = i; j < gameLogic.sortedSecondHalfObjects.size(); j++) {
+                    Card currentCard = gameLogic.sortedSecondHalfObjects.get(j);
                     if (currentCard.getSuitValue() == k) {
                         tempFlush.add(currentCard);
                     }
@@ -1216,10 +1040,10 @@ public class GamePanel {
         computerPass = true;
         // check computer possible triples
         ArrayList<ArrayList<Card>> triples = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 2; i++) {
-            Card card1 = sortedSecondHalfObjects.get(i);
-            Card card2 = sortedSecondHalfObjects.get(i + 1);
-            Card card3 = sortedSecondHalfObjects.get(i + 2);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 2; i++) {
+            Card card1 = gameLogic.sortedSecondHalfObjects.get(i);
+            Card card2 = gameLogic.sortedSecondHalfObjects.get(i + 1);
+            Card card3 = gameLogic.sortedSecondHalfObjects.get(i + 2);
             if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue()) {
                 ArrayList<Card> triple = new ArrayList<>();
                 triple.add(card1);
@@ -1230,9 +1054,9 @@ public class GamePanel {
         }
         // check if computer has pair and only get the smallest one
         ArrayList<Card> pair = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 1; i++) {
-            Card card1 = sortedSecondHalfObjects.get(i);
-            Card card2 = sortedSecondHalfObjects.get(i + 1);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 1; i++) {
+            Card card1 = gameLogic.sortedSecondHalfObjects.get(i);
+            Card card2 = gameLogic.sortedSecondHalfObjects.get(i + 1);
             if (card1.getRankValue() == card2.getRankValue()) {
                 // check if it is repeated with possible triples
                 for (ArrayList<Card> triple: triples) {
@@ -1314,11 +1138,11 @@ public class GamePanel {
         computerPass = true;
         // find four cards
         ArrayList<ArrayList<Card>> fours = new ArrayList<>();
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 3; i++) {
-            Card card1 = sortedSecondHalfObjects.get(i);
-            Card card2 = sortedSecondHalfObjects.get(i + 1);
-            Card card3 = sortedSecondHalfObjects.get(i + 2);
-            Card card4 = sortedSecondHalfObjects.get(i + 3);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 3; i++) {
+            Card card1 = gameLogic.sortedSecondHalfObjects.get(i);
+            Card card2 = gameLogic.sortedSecondHalfObjects.get(i + 1);
+            Card card3 = gameLogic.sortedSecondHalfObjects.get(i + 2);
+            Card card4 = gameLogic.sortedSecondHalfObjects.get(i + 3);
             if (card1.getRankValue() == card2.getRankValue() && card1.getRankValue() == card3.getRankValue()
             && card1.getRankValue() == card4.getRankValue()) {
                 ArrayList<Card> four = new ArrayList<>();
@@ -1333,7 +1157,7 @@ public class GamePanel {
         // get the smallest possible single card but not equal to the 4 cards combination
         ArrayList<Card> singleCard = new ArrayList<>();
         if (!fours.isEmpty()) {
-            for (Card card : sortedSecondHalfObjects) {
+            for (Card card : gameLogic.sortedSecondHalfObjects) {
                 for (ArrayList<Card> four : fours) {
                     if (four.get(0).getRankValue() != card.getRankValue()) {
                         singleCard.add(card);
@@ -1406,13 +1230,13 @@ public class GamePanel {
         ArrayList<ArrayList<Card>> straightFlushes = new ArrayList<>(); // check if computer has straight
 
         // Usual cases
-        for (int i = 0; i < sortedSecondHalfObjects.size() - 4; i++) {
-            Card startCard = sortedSecondHalfObjects.get(i);
+        for (int i = 0; i < gameLogic.sortedSecondHalfObjects.size() - 4; i++) {
+            Card startCard = gameLogic.sortedSecondHalfObjects.get(i);
             ArrayList<Card> tempStraightFlush = new ArrayList<>();
             tempStraightFlush.add(startCard);
 
-            for (int j = i + 1; j < sortedSecondHalfObjects.size(); j++) {
-                Card nextCard = sortedSecondHalfObjects.get(j);
+            for (int j = i + 1; j < gameLogic.sortedSecondHalfObjects.size(); j++) {
+                Card nextCard = gameLogic.sortedSecondHalfObjects.get(j);
                 if (nextCard.getRankValue() == tempStraightFlush.get(tempStraightFlush.size() - 1).getRankValue() + 1 &&
                 nextCard.getSuitValue() == tempStraightFlush.get(tempStraightFlush.size() - 1).getSuitValue()) {
                     tempStraightFlush.add(nextCard);
@@ -1426,7 +1250,7 @@ public class GamePanel {
 
         // special case: 23456 and A2345
         ArrayList<Integer> sortedSecondHalfRanks = new ArrayList<>();
-        for (Card card: sortedSecondHalfObjects) {
+        for (Card card: gameLogic.sortedSecondHalfObjects) {
             sortedSecondHalfRanks.add(card.getRankValue());
         }
 
@@ -1436,7 +1260,7 @@ public class GamePanel {
             int[] cardRanks = {1, 2, 3, 4, 13};
             ArrayList<Card> tempStraightFlush = new ArrayList<>();
             for (int cardRank : cardRanks) {
-                for (Card card : sortedSecondHalfObjects) {
+                for (Card card : gameLogic.sortedSecondHalfObjects) {
                     if (card.getRankValue() == cardRank) {
                         tempStraightFlush.add(card);
                         break;
@@ -1459,7 +1283,7 @@ public class GamePanel {
             int[] cardRanks = {1, 2, 3, 12, 13};
             ArrayList<Card> tempStraightFlush = new ArrayList<>();
             for (int cardRank : cardRanks) {
-                for (Card card : sortedSecondHalfObjects) {
+                for (Card card : gameLogic.sortedSecondHalfObjects) {
                     if (card.getRankValue() == cardRank) {
                         tempStraightFlush.add(card);
                         break;
@@ -1524,19 +1348,11 @@ public class GamePanel {
     }
     public void computerMove(String combination) {
         switch (combination) {
-            case "Single card":
-                computerSingleCard();
-                break;
-            case "Pair":
-                computerPair();
-                break;
-            case "Triples":
-                computerTriples();
-                break;
-            case "Four cards":
-                computerFourCards();
-                break;
-            case "Straight":
+            case "Single card" -> computerSingleCard();
+            case "Pair" -> computerPair();
+            case "Triples" -> computerTriples();
+            case "Four cards" -> computerFourCards();
+            case "Straight" -> {
                 computerStraight();
                 if (computerPass) {
                     computerFlush();
@@ -1550,8 +1366,8 @@ public class GamePanel {
                 if (computerPass) {
                     computerStraightFlush();
                 }
-                break;
-            case "Flush":
+            }
+            case "Flush" -> {
                 computerFlush();
                 if (computerPass) {
                     computerFullHouse();
@@ -1562,8 +1378,8 @@ public class GamePanel {
                 if (computerPass) {
                     computerStraightFlush();
                 }
-                break;
-            case "Full House":
+            }
+            case "Full House" -> {
                 computerFullHouse();
                 if (computerPass) {
                     computerFourOfAKind();
@@ -1571,15 +1387,14 @@ public class GamePanel {
                 if (computerPass) {
                     computerStraightFlush();
                 }
-                break;
-            case "Four of a kind":
+            }
+            case "Four of a kind" -> {
                 computerFourOfAKind();
                 if (computerPass) {
                     computerStraightFlush();
                 }
-                break;
-            case "Straight Flush":
-                computerStraightFlush();
+            }
+            case "Straight Flush" -> computerStraightFlush();
         }
         if (computerPass) {
             message.setText("Computer Pass");
@@ -1615,14 +1430,14 @@ public class GamePanel {
         computerCardDeck.repaint();
 
         for (Card card: computerSelectedCards) {
-            sortedSecondHalfObjects.remove(card);
-            sortedSecondHalf.remove(card.name());
+            gameLogic.sortedSecondHalfObjects.remove(card);
+            gameLogic.sortedSecondHalf.remove(card.name());
         }
 
         computerSelectedCards.clear();
 
         ArrayList<ImageIcon> cardImages = new ArrayList<>();
-        for (String cardName: sortedSecondHalf) {
+        for (String cardName: gameLogic.sortedSecondHalf) {
             String cardPath = String.format("src/small-cards/%s.png", cardName);
             cardImages.add(new ImageIcon(cardPath));
         }
@@ -1637,7 +1452,7 @@ public class GamePanel {
             computerCardDeck.add(handCard);
         }
 
-        int cardHandLength = sortedSecondHalfObjects.size();
+        int cardHandLength = gameLogic.sortedSecondHalfObjects.size();
         int gap = CARD_WIDTH + (GAME_WIDTH - (cardHandLength * CARD_WIDTH)) / (cardHandLength + 2);
         for (int i = 0; i < handCards.length; i++) {
             handCards[i].setBounds((i + 1) * gap - 100, 20, 102, 153);
@@ -1675,14 +1490,14 @@ public class GamePanel {
         cardDeck.repaint();
 
         for (Card card: selectedCards) {
-            sortedFirstHalfObjects.remove(card);
-            sortedFirstHalf.remove(card.name());
+            gameLogic.sortedFirstHalfObjects.remove(card);
+            gameLogic.sortedFirstHalf.remove(card.name());
         }
 
         selectedCards.clear();
 
         ArrayList<ImageIcon> cardImages = new ArrayList<>();
-        for (String cardName: sortedFirstHalf) {
+        for (String cardName: gameLogic.sortedFirstHalf) {
             String cardPath = String.format("src/small-cards/%s.png", cardName);
             cardImages.add(new ImageIcon(cardPath));
         }
@@ -1697,7 +1512,7 @@ public class GamePanel {
             cardDeck.add(handCard);
         }
 
-        int cardHandLength = sortedFirstHalfObjects.size();
+        int cardHandLength = gameLogic.sortedFirstHalfObjects.size();
         int gap = CARD_WIDTH + (GAME_WIDTH - (cardHandLength * CARD_WIDTH)) / (cardHandLength + 2);
         for (int i = 0; i < handCards.length; i++) {
             handCards[i].setBounds((i + 1) * gap - 100, 20, 102, 153);
@@ -1708,15 +1523,6 @@ public class GamePanel {
         for (int i = 0; i < cardTableCards.length; i++) {
             cardTableCards[i].setBounds((i + 1) * tableCardGap - 100, 20, 102, 153);
         }
-    }
-    private static int getSuitValue(String suit) {
-        return switch (suit) {
-            case "Diamonds" -> 1;
-            case "Clubs" -> 2;
-            case "Hearts" -> 3;
-            case "Spades" -> 4;
-            default -> 0;
-        };
     }
     public int getCombinationValue(String combination) {
         return switch (combination) {
@@ -1729,7 +1535,7 @@ public class GamePanel {
         };
     }
 
-    private void resetGame() {
+    public void resetGame() {
         message.setText("Your Turn");
         passButton.setEnabled(true);
         confirmButton.setEnabled(true);
@@ -1737,8 +1543,8 @@ public class GamePanel {
         cardDeck.removeAll();
         cardDeck.revalidate();
         cardDeck.repaint();
-        sortedFirstHalf.clear();
-        sortedFirstHalfObjects.clear();
+        gameLogic.sortedFirstHalf.clear();
+        gameLogic.sortedFirstHalfObjects.clear();
 
         cardTable.removeAll();
         cardTable.revalidate();
@@ -1746,17 +1552,17 @@ public class GamePanel {
         cardTableImages.clear();
         cardTableObjects.clear();
 
-        sortedSecondHalf.clear();
-        sortedSecondHalfObjects.clear();
+        gameLogic.sortedSecondHalf.clear();
+        gameLogic.sortedSecondHalfObjects.clear();
         computerCardDeck.removeAll();
         computerCardDeck.revalidate();
         computerCardDeck.repaint();
 
-        createShuffledCards();
+        gameLogic.createShuffledCards();
 
         // Player card reset
         ArrayList<ImageIcon> cardImages = new ArrayList<>();
-        for (String cardName: sortedFirstHalf) {
+        for (String cardName: gameLogic.sortedFirstHalf) {
             String cardPath = String.format("src/small-cards/%s.png", cardName);
             cardImages.add(new ImageIcon(cardPath));
         }
@@ -1771,7 +1577,7 @@ public class GamePanel {
             cardDeck.add(handCard);
         }
 
-        int cardHandLength = sortedFirstHalfObjects.size();
+        int cardHandLength = gameLogic.sortedFirstHalfObjects.size();
         int gap = CARD_WIDTH + (GAME_WIDTH - (cardHandLength * CARD_WIDTH)) / (cardHandLength + 2);
         for (int i = 0; i < handCards.length; i++) {
             handCards[i].setBounds((i + 1) * gap - 100, 20, 102, 153);
@@ -1784,12 +1590,12 @@ public class GamePanel {
             playerMouseListeners[index] = new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    if (selectedCards.contains(sortedFirstHalfObjects.get(index))) {
-                        selectedCards.remove(sortedFirstHalfObjects.get(index));
+                    if (selectedCards.contains(gameLogic.sortedFirstHalfObjects.get(index))) {
+                        selectedCards.remove(gameLogic.sortedFirstHalfObjects.get(index));
                         handCards[index].setBounds((index + 1) * gap - 100 , 20, 102, 153);
                         System.out.println(selectedCards);
                     } else if (selectedCards.size() < 5) {
-                        selectedCards.add(sortedFirstHalfObjects.get(index));
+                        selectedCards.add(gameLogic.sortedFirstHalfObjects.get(index));
                         handCards[index].setBounds((index + 1) * gap - 100 , 0, 102, 153);
                         System.out.println(selectedCards);
                     } else {
@@ -1801,7 +1607,7 @@ public class GamePanel {
         }
 
         ArrayList<ImageIcon> computerCardImages = new ArrayList<>();
-        for (String cardName: sortedSecondHalf) {
+        for (String cardName: gameLogic.sortedSecondHalf) {
             String cardPath = String.format("src/small-cards/%s.png", cardName);
             computerCardImages.add(new ImageIcon(cardPath));
         }
@@ -1816,7 +1622,7 @@ public class GamePanel {
             computerCardDeck.add(handCard);
         }
 
-        int computerCardHandLength = sortedSecondHalfObjects.size();
+        int computerCardHandLength = gameLogic.sortedSecondHalfObjects.size();
         int computerGap = CARD_WIDTH + (GAME_WIDTH - (computerCardHandLength * CARD_WIDTH)) / (computerCardHandLength + 2);
         for (int i = 0; i < handCards.length; i++) {
             handCards[i].setBounds((i + 1) * computerGap - 100, 20, 102, 153);
