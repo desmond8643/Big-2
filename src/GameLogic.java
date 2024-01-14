@@ -6,6 +6,7 @@ import java.util.Timer;
 
 public class GameLogic {
     private final GamePanel gamePanel;
+    private ComputerLogic computerLogic;
     final String[] ranks = {"3", "4", "5", "6", "7", "8", "9", "10", "Jack", "Queen", "King", "Ace", "2"};
     final String[] suits = {"Diamonds", "Clubs", "Hearts", "Spades"};
     ArrayList<String>sortedFirstHalf = new ArrayList<>();
@@ -13,14 +14,15 @@ public class GameLogic {
     ArrayList<Card>sortedFirstHalfObjects = new ArrayList<>();
     ArrayList<Card>sortedSecondHalfObjects = new ArrayList<>();
     Timer timer = new Timer();
-    GameLogic(GamePanel gamePanel) {
+    GameLogic(GamePanel gamePanel, ComputerLogic computerLogic) {
         this.gamePanel = gamePanel;
+        this.computerLogic = computerLogic;
         addEventListeners();
     }
 
     private void addEventListeners() {
         gamePanel.confirmButton.addActionListener(e -> {
-            gamePanel.sortSelectedCards();
+            sortSelectedCards();
 
             int selectedCardSize = gamePanel.selectedCards.size();
             String numberOfCards;
@@ -37,16 +39,18 @@ public class GameLogic {
                     if (gamePanel.isSelectedCardValid(numberOfCards)) {
                         gamePanel.confirmButton.setEnabled(false);
                         gamePanel.passButton.setEnabled(false);
+                        gamePanel.reactivateButton.setEnabled(false);
                         gamePanel.renderCardInTable();
                         if (!sortedFirstHalfObjects.isEmpty()) {
                             TimerTask computer = new TimerTask() {
                                 @Override
                                 public void run() {
-                                    gamePanel.computerMove(numberOfCards);
+                                    computerLogic.computerMove(numberOfCards);
                                     System.out.println(sortedSecondHalfObjects.size());
                                     if (!sortedSecondHalfObjects.isEmpty()) {
                                         gamePanel.confirmButton.setEnabled(true);
                                         gamePanel.passButton.setEnabled(true);
+                                        gamePanel.reactivateButton.setEnabled(true);
                                         reactivatePlayerMouseListener();
                                     } else {
                                         gamePanel.message.setText("Computer wins!");
@@ -78,10 +82,11 @@ public class GameLogic {
                             TimerTask computer = new TimerTask() {
                                 @Override
                                 public void run() {
-                                    gamePanel.computerMove(getPlayerCombination);
+                                    computerLogic.computerMove(getPlayerCombination);
                                     if (!sortedSecondHalfObjects.isEmpty()) {
                                         gamePanel.confirmButton.setEnabled(true);
                                         gamePanel.passButton.setEnabled(true);
+                                        gamePanel.reactivateButton.setEnabled(true);
                                         reactivatePlayerMouseListener();
                                     } else {
                                         gamePanel.message.setText("Computer wins!");
@@ -107,14 +112,17 @@ public class GameLogic {
         gamePanel.passButton.addActionListener(e -> {
             gamePanel.confirmButton.setEnabled(false);
             gamePanel.passButton.setEnabled(false);
+            gamePanel.reactivateButton.setEnabled(false);
+
             TimerTask computer = new TimerTask() {
                 @Override
                 public void run() {
-                    gamePanel.computerRandomMove();
+                    computerLogic.computerRandomMove();
                     System.out.println(sortedSecondHalfObjects.size());
                     if (!sortedSecondHalfObjects.isEmpty()) {
                         gamePanel.confirmButton.setEnabled(true);
                         gamePanel.passButton.setEnabled(true);
+                        gamePanel.reactivateButton.setEnabled(true);
                         reactivatePlayerMouseListener();
                     } else {
                         gamePanel.message.setText("Computer wins!");
@@ -125,6 +133,10 @@ public class GameLogic {
             gamePanel.message.setText("Computer's turn");
             gamePanel.message.setBounds(680 , 310, 600, 600);
             timer.schedule(computer, 3000);
+        });
+
+        gamePanel.reactivateButton.addActionListener(e -> {
+            reactivatePlayerMouseListener();
         });
 
         gamePanel.exitItem.addActionListener(e -> {
@@ -193,6 +205,31 @@ public class GameLogic {
         };
     }
 
+    public void initializePlayerMouseListener() {
+        MouseListener[] playerMouseListeners = new MouseListener[gamePanel.handCards.length];
+
+        for (int i = 0; i < gamePanel.handCards.length; i++) {
+            final int index = i;
+            playerMouseListeners[index] = new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (gamePanel.selectedCards.contains(sortedFirstHalfObjects.get(index))) {
+                        gamePanel.selectedCards.remove(sortedFirstHalfObjects.get(index));
+                        gamePanel.handCards[index].setBounds((index + 1) * gamePanel.gap - 100 , 20, 102, 153);
+                        System.out.println(gamePanel.selectedCards);
+                    } else if (gamePanel.selectedCards.size() < 5) {
+                        gamePanel.selectedCards.add(sortedFirstHalfObjects.get(index));
+                        gamePanel.handCards[index].setBounds((index + 1) * gamePanel.gap - 100 , 0, 102, 153);
+                        System.out.println(gamePanel.selectedCards);
+                    } else {
+                        System.out.println("Selected more than 5 cards");
+                    }
+                }
+            };
+            gamePanel.handCards[i].addMouseListener(playerMouseListeners[i]);
+        }
+    }
+
     public void reactivatePlayerMouseListener() {
         MouseListener[] playerMouseListeners = new MouseListener[gamePanel.handCards.length];
         int cardHandLength = sortedFirstHalfObjects.size();
@@ -218,5 +255,21 @@ public class GameLogic {
             };
             gamePanel.handCards[i].addMouseListener(playerMouseListeners[i]);
         }
+    }
+
+    public void sortSelectedCards() {
+        // sort selectedCard
+        ArrayList<Card> sortedSelectedCards = new ArrayList<>();
+        for (int i = 1; i <= ranks.length; i++) {
+            for (int j = 1; j <= suits.length; j++) {
+                for (Card selectedCard : gamePanel.selectedCards) {
+                    if (selectedCard.getSuitValue() == j && selectedCard.getRankValue() == i) {
+                        sortedSelectedCards.add(selectedCard);
+                    }
+                }
+            }
+        }
+        gamePanel.selectedCards.clear();
+        gamePanel.selectedCards.addAll(sortedSelectedCards);
     }
 }
