@@ -605,6 +605,8 @@ public class GamePanel {
 
         gameLogic.sortedSecondHalf.clear();
         gameLogic.sortedSecondHalfObjects.clear();
+        gameLogic.sortedThirdHalf.clear();
+        gameLogic.sortedThirdHalfObjects.clear();
         computerCardDeck.removeAll();
         computerCardDeck.revalidate();
         computerCardDeck.repaint();
@@ -612,6 +614,7 @@ public class GamePanel {
         gameLogic.createShuffledCards();
 
         computer1Cards.setText(gameLogic.sortedSecondHalfObjects.size() + " cards");
+        computer2Cards.setText(gameLogic.sortedThirdHalfObjects.size() + " cards");
 
         // Player card reset
         ArrayList<ImageIcon> cardImages = new ArrayList<>();

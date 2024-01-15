@@ -61,8 +61,10 @@ public class GameLogic {
                         default -> "Invalid";
                     };
                     gamePanel.message.setText("Computer 1 played " + numberOfCards);
+                    numberOfPass = 0;
                 }
                 System.out.println(numberOfPass);
+                System.out.println(sortedSecondHalfObjects.size());
             }
         };
         TimerTask computer2SetText = new TimerTask() {
@@ -95,7 +97,7 @@ public class GameLogic {
                     gamePanel.message.setText("Computer 2 Pass");
                     gamePanel.message.setBounds(680, 310, 600, 600);
                     numberOfPass++;
-                } else if (sortedSecondHalfObjects.isEmpty()) {
+                } else if (sortedThirdHalfObjects.isEmpty()) {
                     gamePanel.message.setText("Computer 2 wins!");
                     gamePanel.message.setBounds(680, 310, 600, 600);
                 } else {
@@ -108,8 +110,10 @@ public class GameLogic {
                         default -> "Invalid";
                     };
                     gamePanel.message.setText("Computer 2 played " + numberOfCards);
+                    numberOfPass = 0;
                 }
                 System.out.println(numberOfPass);
+                System.out.println(sortedThirdHalfObjects.size());
             }
         };
         TimerTask yourTurn = new TimerTask() {
@@ -126,11 +130,11 @@ public class GameLogic {
         gamePanel.message.setText("Computer 1's turn");
         gamePanel.message.setBounds(680, 310, 600, 600);
         timer.schedule(computer, 3000);
-        if (!sortedSecondHalfObjects.isEmpty()) {
+        if (sortedSecondHalfObjects.size() > 0) {
             timer.schedule(computer2SetText, 6000);
             timer.schedule(computer2, 9000);
         }
-        if (!sortedThirdHalfObjects.isEmpty()) {
+        if (sortedSecondHalfObjects.size() > 0 && sortedThirdHalfObjects.size() > 0) {
             timer.schedule(yourTurn, 12000);
         }
     }
@@ -237,6 +241,7 @@ public class GameLogic {
                         numberOfPass = 0;
                     }
                     System.out.println(numberOfPass);
+                    System.out.println(sortedSecondHalfObjects.size());
                 }
             };
             TimerTask computer2SetText = new TimerTask() {
@@ -270,7 +275,7 @@ public class GameLogic {
                         gamePanel.message.setText("Computer 2 Pass");
                         gamePanel.message.setBounds(680, 310, 600, 600);
                         numberOfPass++;
-                    } else if (sortedSecondHalfObjects.isEmpty()) {
+                    } else if (sortedThirdHalfObjects.isEmpty()) {
                         gamePanel.message.setText("Computer 2 wins!");
                         gamePanel.message.setBounds(680, 310, 600, 600);
                     } else {
@@ -286,6 +291,7 @@ public class GameLogic {
                         numberOfPass = 0;
                     }
                     System.out.println(numberOfPass);
+                    System.out.println(sortedThirdHalfObjects.size());
                 }
             };
             TimerTask yourTurn = new TimerTask() {
@@ -302,11 +308,11 @@ public class GameLogic {
             gamePanel.message.setText("Computer 1's turn");
             gamePanel.message.setBounds(680, 310, 600, 600);
             timer.schedule(computer, 3000);
-            if (!sortedSecondHalfObjects.isEmpty()) {
+            if (sortedSecondHalfObjects.size() > 0) {
                 timer.schedule(computer2SetText, 6000);
                 timer.schedule(computer2, 9000);
             }
-            if (!sortedThirdHalfObjects.isEmpty()) {
+            if (sortedSecondHalfObjects.size() > 0 && sortedThirdHalfObjects.size() > 0) {
                 timer.schedule(yourTurn, 12000);
             }
         });
