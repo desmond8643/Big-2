@@ -10,6 +10,7 @@ public class GamePanel {
     JLabel message = new JLabel();
     JFrame frame = new JFrame();
     JLabel[] handCards;
+    JPanel backgroundPanel = new JPanel();
     JPanel cardDeck = new JPanel();
     JPanel cardTable = new JPanel();
     JPanel computerCardDeck = new JPanel();
@@ -24,6 +25,20 @@ public class GamePanel {
     JMenu optionMenu = new JMenu("Option");
     JMenuItem playAgainItem = new JMenuItem("Play Again (P)");
     JMenuItem exitItem = new JMenuItem("Exit (E)");
+
+    // Computer 1
+    JPanel computer1 = new JPanel();
+    ImageIcon cardBack = new ImageIcon("src/small-cards/card-back.png");
+    JLabel computer1CardBack = new JLabel();
+    JLabel computer1Title = new JLabel();
+    JLabel computer1Cards = new JLabel();
+
+    // Computer 2
+    JPanel computer2 = new JPanel();
+    JLabel computer2CardBack = new JLabel();
+    JLabel computer2Title = new JLabel();
+    JLabel computer2Cards = new JLabel();
+
     int gap;
     private final GameLogic gameLogic;
     private final ComputerLogic computerLogic;
@@ -67,7 +82,6 @@ public class GamePanel {
         JLabel backgroundLabel = new JLabel(new ImageIcon("src/background/poker-background.jpg"));
         backgroundLabel.setBounds(0, 0, GAME_WIDTH, 900);
 
-        JPanel backgroundPanel = new JPanel();
         backgroundPanel.setLayout(null);
         backgroundPanel.setBounds(0, 0, GAME_WIDTH, 900);
         backgroundPanel.add(backgroundLabel);
@@ -85,6 +99,40 @@ public class GamePanel {
         for (JLabel computerHandCard : computerHandCards) {
             computerCardDeck.add(computerHandCard);
         }
+
+        computer1CardBack.setIcon(cardBack);
+        computer1.setLayout(null);
+        computer1.setOpaque(false);
+        computer1.setBounds(150, 50, 300, 300);
+        computer1.add(computer1CardBack);
+        computer1.add(computer1Title);
+        computer1.add(computer1Cards);
+        computer1CardBack.setBounds(12, 0, 107, 150);
+        computer1Title.setText("Computer 1");
+        computer1Title.setFont(new Font("Agency FB", Font.BOLD, 30));
+        computer1Title.setForeground(Color.WHITE);
+        computer1Title.setBounds(10, 160, 150, 40);
+        computer1Cards.setText(gameLogic.sortedFirstHalfObjects.size() + "  cards");
+        computer1Cards.setFont(new Font("Agency FB", Font.BOLD, 30));
+        computer1Cards.setForeground(Color.WHITE);
+        computer1Cards.setBounds(10, 200, 150, 40);
+
+        computer2CardBack.setIcon(cardBack);
+        computer2.setLayout(null);
+        computer2.setOpaque(false);
+        computer2.setBounds(450, 50, 300, 300);
+        computer2.add(computer2CardBack);
+        computer2.add(computer2Title);
+        computer2.add(computer2Cards);
+        computer2CardBack.setBounds(12, 0, 107, 150);
+        computer2Title.setText("Computer 2");
+        computer2Title.setFont(new Font("Agency FB", Font.BOLD, 30));
+        computer2Title.setForeground(Color.WHITE);
+        computer2Title.setBounds(10, 160, 150, 40);
+        computer2Cards.setText(gameLogic.sortedThirdHalfObjects.size() + "  cards");
+        computer2Cards.setFont(new Font("Agency FB", Font.BOLD, 30));
+        computer2Cards.setForeground(Color.WHITE);
+        computer2Cards.setBounds(10, 200, 150, 40);
 
         int cardHandLength = gameLogic.sortedFirstHalfObjects.size();
         gap = CARD_WIDTH + (GAME_WIDTH - (cardHandLength * CARD_WIDTH)) / (cardHandLength + 2);
@@ -114,7 +162,9 @@ public class GamePanel {
         frame.setJMenuBar(menuBar);
         frame.setLayout(null);
         frame.add(cardDeck);
-        frame.add(computerCardDeck);
+        frame.add(computer1);
+        //frame.add(computerCardDeck);
+        frame.add(computer2);
         frame.add(cardTable);
         frame.add(confirmButton);
         frame.add(passButton);
@@ -183,7 +233,8 @@ public class GamePanel {
         }
     }
     public boolean checkSingleCard() {
-        if (cardTableObjects.isEmpty() || computerPass) {
+        if (cardTableObjects.isEmpty() || gameLogic.numberOfPass == 2) {
+            gameLogic.numberOfPass = 0;
             computerPass = false;
             return true;
         }
@@ -204,7 +255,8 @@ public class GamePanel {
         if (selectedCards.get(0).getRankValue() != selectedCards.get(1).getRankValue()) {
             return false;
         }
-        if (cardTableObjects.isEmpty() || computerPass) {
+        if (cardTableObjects.isEmpty() || gameLogic.numberOfPass == 2) {
+            gameLogic.numberOfPass = 0;
             computerPass = false;
             return true;
         }
@@ -222,7 +274,8 @@ public class GamePanel {
         if (!sameRank) {
             return false;
         }
-        if (cardTableObjects.isEmpty() || computerPass) {
+        if (cardTableObjects.isEmpty() || gameLogic.numberOfPass == 2) {
+            gameLogic.numberOfPass = 0;
             computerPass = false;
             return true;
         }
@@ -238,7 +291,8 @@ public class GamePanel {
         if (!sameRank) {
             return false;
         }
-        if (cardTableObjects.isEmpty() || computerPass) {
+        if (cardTableObjects.isEmpty() || gameLogic.numberOfPass == 2) {
+            gameLogic.numberOfPass = 0;
             computerPass = false;
             return true;
         }
@@ -425,7 +479,8 @@ public class GamePanel {
             }
             case "Straight", "Flush", "Full House", "Four of a kind", "Straight Flush" -> {
                 // if it is a pass or table is empty => valid
-                if (cardTableObjects.isEmpty() || computerPass) {
+                if (cardTableObjects.isEmpty() || gameLogic.numberOfPass == 2) {
+                    gameLogic.numberOfPass = 0;
                     computerPass = false;
                     return true;
                 }
@@ -534,6 +589,7 @@ public class GamePanel {
         message.setText("Your Turn");
         passButton.setEnabled(true);
         confirmButton.setEnabled(true);
+        reactivateButton.setEnabled(true);
 
         cardDeck.removeAll();
         cardDeck.revalidate();
@@ -554,6 +610,8 @@ public class GamePanel {
         computerCardDeck.repaint();
 
         gameLogic.createShuffledCards();
+
+        computer1Cards.setText(gameLogic.sortedSecondHalfObjects.size() + " cards");
 
         // Player card reset
         ArrayList<ImageIcon> cardImages = new ArrayList<>();
