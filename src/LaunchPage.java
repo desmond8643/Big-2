@@ -1,14 +1,17 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class LaunchPage implements ActionListener {
     JFrame frame = new JFrame();
     JButton startGameButton = new JButton("Start Game");
     JButton quitGameButton = new JButton("Quit Game");
 
-    LaunchPage() {
+    LaunchPage() throws IOException {
         startGameButton.setBounds(300, 200, 200, 40);
         startGameButton.setFocusable(false);
         startGameButton.addActionListener(this);
@@ -29,7 +32,14 @@ public class LaunchPage implements ActionListener {
         titleLabel.setFont(new Font("Agency FB", Font.BOLD, 50));
         titleLabel.setForeground(Color.WHITE);
 
-        JLabel backgroundLabel = new JLabel(new ImageIcon("src/background/poker-background.jpg"));
+        String imagePath = "background/poker-background.jpg";
+
+        ClassLoader classLoader = getClass().getClassLoader();
+        InputStream imageStream = classLoader.getResourceAsStream(imagePath);
+        assert imageStream != null;
+        Image image = ImageIO.read(imageStream);
+
+        JLabel backgroundLabel = new JLabel(new ImageIcon(image));
         backgroundLabel.setBounds(0, 0, 800, 450);
 
         frame.setTitle("Big 2");
@@ -50,7 +60,11 @@ public class LaunchPage implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == startGameButton) {
             frame.dispose();
-            new GamePanel();
+            try {
+                new GamePanel();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
         if (e.getSource() == quitGameButton) {
             System.exit(0);
@@ -59,6 +73,12 @@ public class LaunchPage implements ActionListener {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new LaunchPage());
+        SwingUtilities.invokeLater(() -> {
+            try {
+                new LaunchPage();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

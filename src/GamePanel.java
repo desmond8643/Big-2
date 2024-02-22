@@ -1,6 +1,9 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public class GamePanel {
@@ -28,7 +31,17 @@ public class GamePanel {
 
     // Computer 1
     JPanel computer1 = new JPanel();
-    ImageIcon cardBack = new ImageIcon("src/small-cards/card-back.png");
+    String cardBackImagePath = "small-cards/card-back.png";
+    ClassLoader classLoader = getClass().getClassLoader();
+    InputStream cardBackImageStream = classLoader.getResourceAsStream(cardBackImagePath);
+    Image cardBackImage;
+
+    {
+        assert cardBackImageStream != null;
+        cardBackImage = ImageIO.read(cardBackImageStream);
+    }
+
+    ImageIcon cardBack = new ImageIcon(cardBackImage);
     JLabel computer1CardBack = new JLabel();
     JLabel computer1Title = new JLabel();
     JLabel computer1Cards = new JLabel();
@@ -44,7 +57,7 @@ public class GamePanel {
     private final ComputerLogic computerLogic;
 
 
-    GamePanel() {
+    GamePanel() throws IOException {
         computerLogic = new ComputerLogic(this);
         gameLogic = new GameLogic(this, computerLogic);
         computerLogic.setGameLogic(gameLogic);
@@ -56,31 +69,45 @@ public class GamePanel {
         initializeMessage();
 
         ArrayList<ImageIcon> cardImages = new ArrayList<>();
-            for (String cardName: gameLogic.sortedFirstHalf) {
-            String cardPath = String.format("src/small-cards/%s.png", cardName);
-            cardImages.add(new ImageIcon(cardPath));
+        for (String cardName: gameLogic.sortedFirstHalf) {
+            String cardPath = String.format("small-cards/%s.png", cardName);
+            InputStream imageStream = getClass().getClassLoader().getResourceAsStream(cardPath);
+            if (imageStream != null) {
+                Image image = ImageIO.read(imageStream);
+                cardImages.add(new ImageIcon(image));
+            }
         }
 
         handCards = new JLabel[cardImages.size()];
-            for (int i = 0; i < cardImages.size(); i++) {
+        for (int i = 0; i < cardImages.size(); i++) {
             handCards[i] = new JLabel();
             handCards[i].setIcon(cardImages.get(i));
         }
 
         ArrayList<ImageIcon> computerCardImages = new ArrayList<>();
-            for (String cardName: gameLogic.sortedSecondHalf) {
-            String cardPath = String.format("src/small-cards/%s.png", cardName);
-            computerCardImages.add(new ImageIcon(cardPath));
+        for (String cardName: gameLogic.sortedSecondHalf) {
+            String cardPath = String.format("small-cards/%s.png", cardName);
+            InputStream imageStream = getClass().getClassLoader().getResourceAsStream(cardPath);
+            if (imageStream != null) {
+                Image image = ImageIO.read(imageStream);
+                computerCardImages.add(new ImageIcon(image));
+            }
         }
 
-        JLabel[] computerHandCards = new JLabel[cardImages.size()];
-            for (int i = 0; i< computerCardImages.size(); i++) {
+        JLabel[] computerHandCards = new JLabel[computerCardImages.size()];
+        for (int i = 0; i < computerCardImages.size(); i++) {
             computerHandCards[i] = new JLabel();
             computerHandCards[i].setIcon(computerCardImages.get(i));
         }
 
-        JLabel backgroundLabel = new JLabel(new ImageIcon("src/background/poker-background.jpg"));
-        backgroundLabel.setBounds(0, 0, GAME_WIDTH, 900);
+        String backgroundPath = "background/poker-background.jpg";
+        InputStream backgroundStream = getClass().getClassLoader().getResourceAsStream(backgroundPath);
+
+        assert backgroundStream != null;
+        Image backgroundImage = ImageIO.read(backgroundStream);
+            JLabel backgroundLabel = new JLabel(new ImageIcon(backgroundImage));
+            backgroundLabel.setBounds(0, 0, GAME_WIDTH, 900);
+
 
         backgroundPanel.setLayout(null);
         backgroundPanel.setBounds(0, 0, GAME_WIDTH, 900);
@@ -515,7 +542,7 @@ public class GamePanel {
         }
         return false;
     }
-    public void renderCardInTable () {
+    public void renderCardInTable () throws IOException {
         cardTable.removeAll();
         cardTable.revalidate();
         cardTable.repaint();
@@ -524,8 +551,12 @@ public class GamePanel {
         for (Card selectedCard : selectedCards) {
             String cardName = selectedCard.name();
             System.out.println(selectedCard.name());
-            String cardPath = String.format("src/small-cards/%s.png", cardName);
-            cardTableImages.add(new ImageIcon(cardPath));
+            String cardPath = String.format("small-cards/%s.png", cardName);
+            InputStream imageStream = getClass().getClassLoader().getResourceAsStream(cardPath);
+            if (imageStream != null) {
+                Image image = ImageIO.read(imageStream);
+                cardTableImages.add(new ImageIcon(image));
+            }
         }
         JLabel[] cardTableCards = new JLabel[cardTableImages.size()];
         for (int i = 0; i < cardTableImages.size(); i++) {
@@ -549,8 +580,12 @@ public class GamePanel {
 
         ArrayList<ImageIcon> cardImages = new ArrayList<>();
         for (String cardName: gameLogic.sortedFirstHalf) {
-            String cardPath = String.format("src/small-cards/%s.png", cardName);
-            cardImages.add(new ImageIcon(cardPath));
+            String cardPath = String.format("small-cards/%s.png", cardName);
+            InputStream imageStream = getClass().getClassLoader().getResourceAsStream(cardPath);
+            if (imageStream != null) {
+                Image image = ImageIO.read(imageStream);
+                cardImages.add(new ImageIcon(image));
+            }
         }
 
         handCards = new JLabel[cardImages.size()];
@@ -585,7 +620,7 @@ public class GamePanel {
             default -> 0;
         };
     }
-    public void resetGame() {
+    public void resetGame() throws IOException {
         message.setText("Your Turn");
         passButton.setEnabled(true);
         confirmButton.setEnabled(true);
@@ -619,8 +654,12 @@ public class GamePanel {
         // Player card reset
         ArrayList<ImageIcon> cardImages = new ArrayList<>();
         for (String cardName: gameLogic.sortedFirstHalf) {
-            String cardPath = String.format("src/small-cards/%s.png", cardName);
-            cardImages.add(new ImageIcon(cardPath));
+            String cardPath = String.format("small-cards/%s.png", cardName);
+            InputStream imageStream = getClass().getClassLoader().getResourceAsStream(cardPath);
+            if (imageStream != null) {
+                Image image = ImageIO.read(imageStream);
+                cardImages.add(new ImageIcon(image));
+            }
         }
 
         handCards = new JLabel[cardImages.size()];
@@ -664,8 +703,12 @@ public class GamePanel {
 
         ArrayList<ImageIcon> computerCardImages = new ArrayList<>();
         for (String cardName: gameLogic.sortedSecondHalf) {
-            String cardPath = String.format("src/small-cards/%s.png", cardName);
-            computerCardImages.add(new ImageIcon(cardPath));
+            String cardPath = String.format("small-cards/%s.png", cardName);
+            InputStream imageStream = getClass().getClassLoader().getResourceAsStream(cardPath);
+            if (imageStream != null) {
+                Image image = ImageIO.read(imageStream);
+                computerCardImages.add(new ImageIcon(image));
+            }
         }
 
         JLabel[] handCards = new JLabel[computerCardImages.size()];

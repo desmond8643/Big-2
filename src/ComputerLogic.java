@@ -1,4 +1,8 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -11,7 +15,7 @@ public class ComputerLogic {
     public void setGameLogic(GameLogic gameLogic) {
         this.gameLogic = gameLogic;
     }
-    public void computerRandomMove(ArrayList<Card> sortedObjects) {
+    public void computerRandomMove(ArrayList<Card> sortedObjects) throws IOException {
         // check all computer possible move and randomly choose one move
         ArrayList<ArrayList<Card>> possibleMoves = new ArrayList<>();
 
@@ -304,7 +308,7 @@ public class ComputerLogic {
         gamePanel.message.setText("Your turn");
         gamePanel.message.setBounds(725 , 310, 600, 600);
     }
-    public void computerSingleCard(ArrayList<Card> sortedObjects) {
+    public void computerSingleCard(ArrayList<Card> sortedObjects) throws IOException {
         gamePanel.computerPass = true;
         // check if there is a single card larger than the card on the table
         for (Card card: sortedObjects) {
@@ -323,7 +327,7 @@ public class ComputerLogic {
             }
         }
     }
-    public void computerPair(ArrayList<Card> sortedObjects) {
+    public void computerPair(ArrayList<Card> sortedObjects) throws IOException {
         gamePanel.computerPass = true;
         // check if computer has pair
         ArrayList<ArrayList<Card>> pairs = new ArrayList<>();
@@ -355,7 +359,7 @@ public class ComputerLogic {
             }
         }
     }
-    public void computerTriples(ArrayList<Card> sortedObjects) {
+    public void computerTriples(ArrayList<Card> sortedObjects) throws IOException {
         gamePanel.computerPass = true;
         // check if computer has a Triple
         ArrayList<ArrayList<Card>> triples = new ArrayList<>();
@@ -383,7 +387,7 @@ public class ComputerLogic {
             }
         }
     }
-    public void computerFourCards(ArrayList<Card> sortedObjects) {
+    public void computerFourCards(ArrayList<Card> sortedObjects) throws IOException {
         gamePanel.computerPass = true;
         // check if computer has a four
         ArrayList<ArrayList<Card>> fours = new ArrayList<>();
@@ -414,7 +418,7 @@ public class ComputerLogic {
             }
         }
     }
-    public void computerStraight(ArrayList<Card> sortedObjects) {
+    public void computerStraight(ArrayList<Card> sortedObjects) throws IOException {
         gamePanel.computerPass = true;
         ArrayList<ArrayList<Card>> straights = new ArrayList<>(); // check if computer has straight
 
@@ -507,7 +511,7 @@ public class ComputerLogic {
         // if largest number in straight is larger than straight on table
         // [3, 4, 5, 6, 7], [4, 5, 6, 7, 8], [5, 6, 7, 8, 9], [6, 7, 8, 9, 10], [7, 8, 9, 10, J], [8, 9, 10, J, Q], [9, 10, J, Q, K], [10, J, Q, K, A], [J, Q, K, A, 2]
     }
-    public void computerFlush(ArrayList<Card> sortedObjects) {
+    public void computerFlush(ArrayList<Card> sortedObjects) throws IOException {
         gamePanel.computerPass = true;
         ArrayList<ArrayList<Card>> flushes = new ArrayList<>(); // check if computer has flush
         // Usual cases
@@ -556,7 +560,7 @@ public class ComputerLogic {
             }
         }
     }
-    public void computerFullHouse(ArrayList<Card> sortedObjects) {
+    public void computerFullHouse(ArrayList<Card> sortedObjects) throws IOException {
         gamePanel.computerPass = true;
         // check computer possible triples
         ArrayList<ArrayList<Card>> triples = new ArrayList<>();
@@ -654,7 +658,7 @@ public class ComputerLogic {
             }
         }
     }
-    public void computerFourOfAKind(ArrayList<Card> sortedObjects) {
+    public void computerFourOfAKind(ArrayList<Card> sortedObjects) throws IOException {
         gamePanel.computerPass = true;
         // find four cards
         ArrayList<ArrayList<Card>> fours = new ArrayList<>();
@@ -745,7 +749,7 @@ public class ComputerLogic {
             }
         }
     }
-    public void computerStraightFlush(ArrayList<Card> sortedObjects) {
+    public void computerStraightFlush(ArrayList<Card> sortedObjects) throws IOException {
         gamePanel.computerPass = true;
         ArrayList<ArrayList<Card>> straightFlushes = new ArrayList<>(); // check if computer has straight
 
@@ -866,7 +870,7 @@ public class ComputerLogic {
             }
         }
     }
-    public void computerMove(String combination, ArrayList<Card> sortedObjects) {
+    public void computerMove(String combination, ArrayList<Card> sortedObjects) throws IOException {
         switch (combination) {
             case "Single card" -> computerSingleCard(sortedObjects);
             case "Pair" -> computerPair(sortedObjects);
@@ -917,7 +921,7 @@ public class ComputerLogic {
             case "Straight Flush" -> computerStraightFlush(sortedObjects);
         }
     }
-    public void renderComputerCardInTable(ArrayList<Card> computerSelectedCards) {
+    public void renderComputerCardInTable(ArrayList<Card> computerSelectedCards) throws IOException {
         gamePanel.cardTable.removeAll();
         gamePanel.cardTable.revalidate();
         gamePanel.cardTable.repaint();
@@ -926,8 +930,12 @@ public class ComputerLogic {
         for (int i = 0; i < computerSelectedCards.size(); i++) {
             String cardName = computerSelectedCards.get(i).name();
             System.out.println(computerSelectedCards.get(i).name());
-            String cardPath = String.format("src/small-cards/%s.png", cardName);
-            gamePanel.cardTableImages.add(new ImageIcon(cardPath));
+            String cardPath = String.format("small-cards/%s.png", cardName);
+            InputStream imageStream = getClass().getClassLoader().getResourceAsStream(cardPath);
+            if (imageStream != null) {
+                Image image = ImageIO.read(imageStream);
+                gamePanel.cardTableImages.add(new ImageIcon(image));
+            }
         }
         JLabel[] cardTableCards = new JLabel[gamePanel.cardTableImages.size()];
         for (int i = 0; i < gamePanel.cardTableImages.size(); i++) {
@@ -953,8 +961,12 @@ public class ComputerLogic {
 
         ArrayList<ImageIcon> cardImages = new ArrayList<>();
         for (String cardName: gameLogic.sortedSecondHalf) {
-            String cardPath = String.format("src/small-cards/%s.png", cardName);
-            cardImages.add(new ImageIcon(cardPath));
+            String cardPath = String.format("small-cards/%s.png", cardName);
+            InputStream imageStream = getClass().getClassLoader().getResourceAsStream(cardPath);
+            if (imageStream != null) {
+                Image image = ImageIO.read(imageStream);
+                cardImages.add(new ImageIcon(image));
+            }
         }
 
         JLabel[] handCards = new JLabel[cardImages.size()];

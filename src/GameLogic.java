@@ -1,6 +1,7 @@
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.util.*;
 import java.util.Timer;
 
@@ -50,7 +51,11 @@ public class GameLogic {
                 ArrayList<Card> copyTableObjects = new ArrayList<>(gamePanel.cardTableObjects);
                 if (numberOfPass == 2) {
                     numberOfPass = 0;
-                    computerLogic.computerRandomMove(sortedThirdHalfObjects);
+                    try {
+                        computerLogic.computerRandomMove(sortedThirdHalfObjects);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else {
                     int cardTableObjectsSize = gamePanel.cardTableObjects.size();
                     String numberOfCards = switch (cardTableObjectsSize) {
@@ -61,7 +66,11 @@ public class GameLogic {
                         case 5 -> gamePanel.getFiveCardCombination(gamePanel.cardTableObjects);
                         default -> "Invalid";
                     };
-                    computerLogic.computerMove(numberOfCards, sortedThirdHalfObjects);
+                    try {
+                        computerLogic.computerMove(numberOfCards, sortedThirdHalfObjects);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 gamePanel.computer2Cards.setText(sortedThirdHalfObjects.size() + " cards");
                 if (copyTableObjects.equals(gamePanel.cardTableObjects)) {
@@ -96,7 +105,11 @@ public class GameLogic {
                 ArrayList<Card> copyTableObjects = new ArrayList<>(gamePanel.cardTableObjects);
                 if (numberOfPass == 2) {
                     numberOfPass = 0;
-                    computerLogic.computerRandomMove(sortedSecondHalfObjects);
+                    try {
+                        computerLogic.computerRandomMove(sortedSecondHalfObjects);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else {
                     int cardTableObjectsSize = gamePanel.cardTableObjects.size();
                     String numberOfCards = switch (cardTableObjectsSize) {
@@ -107,7 +120,11 @@ public class GameLogic {
                         case 5 -> gamePanel.getFiveCardCombination(gamePanel.cardTableObjects);
                         default -> "Invalid";
                     };
-                    computerLogic.computerMove(numberOfCards, sortedSecondHalfObjects);
+                    try {
+                        computerLogic.computerMove(numberOfCards, sortedSecondHalfObjects);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 gamePanel.computer1Cards.setText(sortedSecondHalfObjects.size() + " cards");
                 if (copyTableObjects.equals(gamePanel.cardTableObjects)) {
@@ -162,7 +179,11 @@ public class GameLogic {
                         gamePanel.confirmButton.setEnabled(false);
                         gamePanel.passButton.setEnabled(false);
                         gamePanel.reactivateButton.setEnabled(false);
-                        gamePanel.renderCardInTable();
+                        try {
+                            gamePanel.renderCardInTable();
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
                         numberOfPass = 0;
                         System.out.println(numberOfPass);
                         if (sortedFirstHalfObjects.isEmpty()) {
@@ -182,7 +203,11 @@ public class GameLogic {
                         gamePanel.confirmButton.setEnabled(false);
                         gamePanel.passButton.setEnabled(false);
                         gamePanel.reactivateButton.setEnabled(false);
-                        gamePanel.renderCardInTable();
+                        try {
+                            gamePanel.renderCardInTable();
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
                         numberOfPass = 0;
                         System.out.println(numberOfPass);
                         if (sortedFirstHalfObjects.isEmpty()) {
@@ -231,7 +256,11 @@ public class GameLogic {
 
                     if (numberOfPass == 2) {
                         numberOfPass = 0;
-                        computerLogic.computerRandomMove(sortedThirdHalfObjects);
+                        try {
+                            computerLogic.computerRandomMove(sortedThirdHalfObjects);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
                     } else {
                         int cardTableObjectsSize = gamePanel.cardTableObjects.size();
                         String numberOfCards = switch (cardTableObjectsSize) {
@@ -242,7 +271,11 @@ public class GameLogic {
                             case 5 -> gamePanel.getFiveCardCombination(gamePanel.cardTableObjects);
                             default -> "Invalid";
                         };
-                        computerLogic.computerMove(numberOfCards, sortedThirdHalfObjects);
+                        try {
+                            computerLogic.computerMove(numberOfCards, sortedThirdHalfObjects);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
                     }
                     gamePanel.computer2Cards.setText(sortedThirdHalfObjects.size() + " cards");
                     if (copyTableObjects.equals(gamePanel.cardTableObjects)) {
@@ -277,7 +310,11 @@ public class GameLogic {
                     ArrayList<Card> copyTableObjects = new ArrayList<>(gamePanel.cardTableObjects);
                     if (numberOfPass == 2) {
                         numberOfPass = 0;
-                        computerLogic.computerRandomMove(sortedSecondHalfObjects);
+                        try {
+                            computerLogic.computerRandomMove(sortedSecondHalfObjects);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
                     } else {
                         int cardTableObjectsSize = gamePanel.cardTableObjects.size();
                         String numberOfCards = switch (cardTableObjectsSize) {
@@ -288,7 +325,11 @@ public class GameLogic {
                             case 5 -> gamePanel.getFiveCardCombination(gamePanel.cardTableObjects);
                             default -> "Invalid";
                         };
-                        computerLogic.computerMove(numberOfCards, sortedSecondHalfObjects);
+                        try {
+                            computerLogic.computerMove(numberOfCards, sortedSecondHalfObjects);
+                        } catch (IOException ex) {
+                            throw new RuntimeException(ex);
+                        }
                     }
                     gamePanel.computer1Cards.setText(sortedSecondHalfObjects.size() + " cards");
                     if (copyTableObjects.equals(gamePanel.cardTableObjects)) {
@@ -332,7 +373,11 @@ public class GameLogic {
         });
 
         gamePanel.playAgainItem.addActionListener(e -> {
-            gamePanel.resetGame();
+            try {
+                gamePanel.resetGame();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         });
     }
 
